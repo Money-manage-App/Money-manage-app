@@ -1,5 +1,7 @@
 package com.example.money_manage_app.features.ui
 
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -29,7 +31,10 @@ data class BottomNavItem(
 )
 
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen() {
+    // ✅ Tạo NavController riêng cho phần bottom navigation
+    val navController = rememberNavController()
+
     val items = listOf(
         BottomNavItem("home", R.string.home, Icons.Default.Home),
         BottomNavItem("history", R.string.history, Icons.Default.History),
@@ -60,12 +65,13 @@ fun MainScreen(navController: NavHostController) {
                         onClick = {
                             if (currentRoute != item.route) {
                                 navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId)
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
                                     launchSingleTop = true
+                                    restoreState = true
                                 }
                             }
                         },
-                        icon = {
+                                icon = {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = stringResource(item.titleRes),
@@ -77,20 +83,13 @@ fun MainScreen(navController: NavHostController) {
                                 text = stringResource(item.titleRes),
                                 color = if (selected) activeColor else inactiveColor
                             )
-                        },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = Color.Transparent,
-                            selectedIconColor = activeColor,
-                            unselectedIconColor = inactiveColor,
-                            selectedTextColor = activeColor,
-                            unselectedTextColor = inactiveColor
-                        )
+                        }
                     )
                 }
             }
         }
     ) { innerPadding ->
+        // ✅ NavGraph dùng navController riêng
         NavGraph(
             navController = navController,
             modifier = Modifier

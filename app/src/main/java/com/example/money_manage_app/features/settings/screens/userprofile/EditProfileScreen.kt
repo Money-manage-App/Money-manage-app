@@ -27,6 +27,9 @@ fun EditProfileScreen(navController: NavHostController) {
     var email by remember { mutableStateOf(TextFieldValue(userInfo["email"] ?: "")) }
     var phone by remember { mutableStateOf(TextFieldValue(userInfo["phone"] ?: "")) }
 
+    var gender by remember { mutableStateOf(userInfo["gender"] ?: "") }
+    var birthday by remember { mutableStateOf(userInfo["birthday"] ?: "") }
+
     val scope = rememberCoroutineScope()
     val colors = MaterialTheme.colorScheme
 
@@ -79,15 +82,37 @@ fun EditProfileScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // ✅ Giới tính
+            Text("Giới tính", style = MaterialTheme.typography.titleMedium)
+
+            Row {
+                RadioButton(
+                    selected = gender == "Nam",
+                    onClick = { gender = "Nam" }
+                )
+                Text("Nam")
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                RadioButton(
+                    selected = gender == "Nữ",
+                    onClick = { gender = "Nữ" }
+                )
+                Text("Nữ")
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
                     scope.launch {
+                        // ✅ Lưu cả gender & birthday
                         userPrefs.saveUserInfo(
                             name.text,
                             email.text,
-                            phone.text
+                            phone.text,
+                            gender,
+                            birthday
                         )
                         navController.popBackStack()
                     }

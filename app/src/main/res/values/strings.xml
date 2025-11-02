@@ -27,4 +27,14 @@
     <string name="home">Trang chủ</string>
     <string name="history">Lịch sử</string>
     <string name="report">Báo cáo</string>
+
+    <string name="gender">Giới tính</string>
+    <string name="male">Nam</string>
+    <string name="female">Nữ</string>
+    <string name="birthday">Ngày sinh</string>
+
+    <string name="no_gender">Chưa chọn giới tính</string>
+    <string name="no_birthday">Chưa có ngày sinh</string>
+
+    <string name="logout">Đăng xuất</string>
 </resources>

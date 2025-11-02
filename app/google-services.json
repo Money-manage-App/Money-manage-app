@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "670135857127",
+    "project_id": "fir-setup-fcc11",
+    "storage_bucket": "fir-setup-fcc11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670135857127:android:963b81c92d0cb13c109742",
+        "android_client_info": {
+          "package_name": "com.example.money_manage_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "670135857127-grv5vp1u7o1k0pnl7omrr9adid63bv5b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.money_manage_app",
+            "certificate_hash": "caa1c1c5fcbb79bb7e8bf959fe3d10c2d9c537d7"
+          }
+        },
+        {
+          "client_id": "670135857127-7l1sc670mf6vr4edtfo0kud4uk5dctj8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpU2eMXVDISYOjkgW9oZhEKzWjGv9g8NE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "670135857127-7l1sc670mf6vr4edtfo0kud4uk5dctj8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

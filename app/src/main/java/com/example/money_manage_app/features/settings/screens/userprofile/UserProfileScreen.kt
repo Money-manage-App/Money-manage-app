@@ -30,6 +30,8 @@ fun UserProfileScreen(navController: NavHostController) {
     val name = userInfo["name"] ?: stringResource(R.string.no_name)
     val email = userInfo["email"] ?: stringResource(R.string.no_email)
     val phone = userInfo["phone"] ?: stringResource(R.string.no_phone)
+    val gender = userInfo["gender"] ?: stringResource(R.string.no_gender)
+    val birthday = userInfo["birthday"] ?: stringResource(R.string.no_birthday)
 
     val colors = MaterialTheme.colorScheme
 
@@ -87,6 +89,8 @@ fun UserProfileScreen(navController: NavHostController) {
                 ProfileItem(label = stringResource(R.string.full_name), value = name)
                 ProfileItem(label = stringResource(R.string.email), value = email)
                 ProfileItem(label = stringResource(R.string.phone_number), value = phone)
+                ProfileItem(label = "Giới tính", value = gender)
+                ProfileItem(label = "Ngày sinh", value = birthday)
             }
 
             Spacer(modifier = Modifier.height(30.dp))
