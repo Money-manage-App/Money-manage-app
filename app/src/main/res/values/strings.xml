@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Cài đặt</string>
+    <string name="settings_title">Cài đặt</string>
+    <string name="user_profile_title">Hồ sơ người dùng</string>
+    <string name="edit_profile_title">Chỉnh sửa hồ sơ</string>
+    <string name="edit_profile">Chỉnh sửa hồ sơ</string>
+    <string name="full_name">Họ tên</string>
+    <string name="email">Email</string>
+    <string name="phone_number">Số điện thoại</string>
+    <string name="save_changes">Lưu thay đổi</string>
+    <string name="no_name">Chưa có tên</string>
+    <string name="no_email">Chưa có email</string>
+    <string name="no_phone">Chưa có số điện thoại</string>
+    <string name="theme">Giao diện</string>
+    <string name="light_mode">Sáng</string>
+    <string name="dark_mode">Tối</string>
+    <string name="back">Quay lại</string>
+
+    <string name="profile">Hồ sơ</string>
+    <string name="category_settings">Danh mục</string>
+    <string name="currency">Tiền tệ</string>
+    <string name="font_size">Cỡ chữ</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="edit">Chỉnh sửa</string>
+
+    <!-- ✅ Bottom navigation text -->
+    <string name="home">Trang chủ</string>
+    <string name="history">Lịch sử</string>
+    <string name="report">Báo cáo</string>
+</resources>

@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="user_profile_title">User Profile</string>
+    <string name="edit_profile_title">Edit Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="full_name">Full Name</string>
+    <string name="email">Email</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="no_name">No name</string>
+    <string name="no_email">No email</string>
+    <string name="no_phone">No phone number</string>
+    <string name="theme">Theme</string>
+    <string name="light_mode">Light</string>
+    <string name="dark_mode">Dark</string>
+    <string name="back">Back</string>
+
+    <!-- ✅ Add new -->
+    <string name="profile">Profile</string>
+    <string name="category_settings">Categories</string>
+    <string name="currency">Currency</string>
+    <string name="font_size">Font Size</string>
+    <string name="language">Language</string>
+    <string name="edit">Edit</string>
+
+    <!-- ✅ Bottom navigation text -->
+    <string name="home">Home</string>
+    <string name="history">History</string>
+    <string name="report">Report</string>
+</resources>
