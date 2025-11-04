@@ -15,9 +15,8 @@ class UserPreferences(private val context: Context) {
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_EMAIL = stringPreferencesKey("user_email")
         val USER_PHONE = stringPreferencesKey("user_phone")
-
         val USER_GENDER = stringPreferencesKey("user_gender")
-        val USER_BIRTHDAY = stringPreferencesKey("user_birthday")
+        val USER_PHOTO = stringPreferencesKey("user_photo")
     }
 
     val userInfo: Flow<Map<String, String>> = context.dataStore.data.map { prefs ->
@@ -25,28 +24,28 @@ class UserPreferences(private val context: Context) {
             "name" to (prefs[USER_NAME] ?: ""),
             "email" to (prefs[USER_EMAIL] ?: ""),
             "phone" to (prefs[USER_PHONE] ?: ""),
-            "gender" to (prefs[USER_GENDER] ?: "Not set"),
-            "birthday" to (prefs[USER_BIRTHDAY] ?: "Not set")
+            "gender" to (prefs[USER_GENDER] ?: ""),
+            "photo" to (prefs[USER_PHOTO] ?: "")
         )
     }
 
-    suspend fun saveUserInfo(name: String, email: String, phone: String, gender: String, birthday: String) {
+    suspend fun saveUserInfo(
+        name: String,
+        email: String,
+        phone: String,
+        gender: String,
+        photo: String
+    ) {
         context.dataStore.edit { prefs ->
             prefs[USER_NAME] = name
             prefs[USER_EMAIL] = email
             prefs[USER_PHONE] = phone
             prefs[USER_GENDER] = gender
-            prefs[USER_BIRTHDAY] = birthday
+            prefs[USER_PHOTO] = photo
         }
     }
 
     suspend fun clearUserInfo() {
-        context.dataStore.edit { prefs ->
-            prefs.remove(USER_NAME)
-            prefs.remove(USER_EMAIL)
-            prefs.remove(USER_PHONE)
-            prefs.remove(USER_GENDER)
-            prefs.remove(USER_BIRTHDAY)
-        }
+        context.dataStore.edit { it.clear() }
     }
 }

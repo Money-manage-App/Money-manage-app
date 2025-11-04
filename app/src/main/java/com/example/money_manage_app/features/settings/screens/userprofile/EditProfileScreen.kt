@@ -1,18 +1,29 @@
 package com.example.money_manage_app.features.settings.screens.userprofile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.money_manage_app.R
+import coil.compose.rememberAsyncImagePainter
 import com.example.money_manage_app.features.settings.data.UserPreferences
 import kotlinx.coroutines.launch
 
@@ -22,109 +33,118 @@ fun EditProfileScreen(navController: NavHostController) {
     val context = LocalContext.current
     val userPrefs = remember { UserPreferences(context) }
     val userInfo by userPrefs.userInfo.collectAsState(initial = mapOf())
-
-    var name by remember { mutableStateOf(TextFieldValue(userInfo["name"] ?: "")) }
-    var email by remember { mutableStateOf(TextFieldValue(userInfo["email"] ?: "")) }
-    var phone by remember { mutableStateOf(TextFieldValue(userInfo["phone"] ?: "")) }
-
-    var gender by remember { mutableStateOf(userInfo["gender"] ?: "") }
-    var birthday by remember { mutableStateOf(userInfo["birthday"] ?: "") }
-
     val scope = rememberCoroutineScope()
+
+    var name by remember { mutableStateOf(userInfo["name"] ?: "") }
+    var email by remember { mutableStateOf(userInfo["email"] ?: "") }
+    var phone by remember { mutableStateOf(userInfo["phone"] ?: "") }
+    var gender by remember { mutableStateOf(userInfo["gender"] ?: "") }
+    var photo by remember { mutableStateOf(userInfo["photo"] ?: "") }
+
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { photo = it.toString() }
+    }
+
     val colors = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.edit_profile_title)) },
+                title = { Text("Chỉnh sửa thông tin") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            userPrefs.saveUserInfo(name, email, phone, gender, photo)
+                            navController.popBackStack()
+                        }
+                    }) {
+                        Icon(Icons.Default.Check, contentDescription = "Lưu")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = colors.primary,
-                    titleContentColor = colors.onPrimary,
-                    navigationIconContentColor = colors.onPrimary
+                    titleContentColor = colors.onPrimary
                 )
             )
         }
     ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
                 .padding(padding)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize()
+                .background(colors.background),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text(stringResource(R.string.full_name)) },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text(stringResource(R.string.email)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text(stringResource(R.string.phone_number)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // ✅ Giới tính
-            Text("Giới tính", style = MaterialTheme.typography.titleMedium)
-
-            Row {
-                RadioButton(
-                    selected = gender == "Nam",
-                    onClick = { gender = "Nam" }
-                )
-                Text("Nam")
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                RadioButton(
-                    selected = gender == "Nữ",
-                    onClick = { gender = "Nữ" }
-                )
-                Text("Nữ")
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .clickable { imagePicker.launch("image/*") },
+                contentAlignment = Alignment.Center
+            ) {
+                if (photo.isNotEmpty()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(photo),
+                        contentDescription = "Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(colors.secondaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (name.isNotEmpty()) name.first().uppercase() else "?",
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSecondaryContainer
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        // ✅ Lưu cả gender & birthday
-                        userPrefs.saveUserInfo(
-                            name.text,
-                            email.text,
-                            phone.text,
-                            gender,
-                            birthday
-                        )
-                        navController.popBackStack()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary
-                )
-            ) {
-                Text(stringResource(R.string.save_changes))
-            }
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Họ tên") },
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Số điện thoại") },
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = gender,
+                onValueChange = { gender = it },
+                label = { Text("Giới tính") },
+                modifier = Modifier.fillMaxWidth(0.85f)
+            )
         }
     }
 }
