@@ -23,17 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.money_manage_app.data.local.datastore.CategoryPreference
+import com.example.money_manage_app.data.local.datastore.CategoryData
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-
-@Serializable
-data class CategoryData(
-    val iconName: String,
-    val name: String
-)
 
 data class CategoryItem(val icon: ImageVector, val name: String, val iconName: String)
 
@@ -72,28 +63,17 @@ fun CategorySettingScreen(navController: NavHostController) {
 
     // Load dữ liệu từ DataStore
     LaunchedEffect(Unit) {
-        categoryPreference.categoriesFlow.collect { savedJson ->
-            if (savedJson.isNotEmpty()) {
-                try {
-                    val saved = Json.decodeFromString<Map<String, List<CategoryData>>>(savedJson.first())
+        categoryPreference.categoriesFlow.collect { saved ->
+            // saved là Map<String, List<CategoryData>>
+            expenseCategories = saved["expense"]?.map { data ->
+                val icon = getIconFromName(data.iconName)
+                CategoryItem(icon, data.name, data.iconName)
+            } ?: defaultExpenseCategories
 
-                    expenseCategories = saved["expense"]?.map { data ->
-                        val icon = getIconFromName(data.iconName)
-                        CategoryItem(icon, data.name, data.iconName)
-                    } ?: defaultExpenseCategories
-
-                    incomeCategories = saved["income"]?.map { data ->
-                        val icon = getIconFromName(data.iconName)
-                        CategoryItem(icon, data.name, data.iconName)
-                    } ?: defaultIncomeCategories
-                } catch (e: Exception) {
-                    expenseCategories = defaultExpenseCategories
-                    incomeCategories = defaultIncomeCategories
-                }
-            } else {
-                expenseCategories = defaultExpenseCategories
-                incomeCategories = defaultIncomeCategories
-            }
+            incomeCategories = saved["income"]?.map { data ->
+                val icon = getIconFromName(data.iconName)
+                CategoryItem(icon, data.name, data.iconName)
+            } ?: defaultIncomeCategories
         }
     }
 
@@ -103,7 +83,7 @@ fun CategorySettingScreen(navController: NavHostController) {
             val expenseData = expenseCategories.map { CategoryData(it.iconName, it.name) }
             val incomeData = incomeCategories.map { CategoryData(it.iconName, it.name) }
             val data = mapOf("expense" to expenseData, "income" to incomeData)
-            categoryPreference.save(listOf(Json.encodeToString(data)))
+            categoryPreference.save(data)
         }
     }
 
@@ -213,9 +193,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                             modifier = Modifier
                                 .size(28.dp)
                                 .background(Color(0xFFD32F2F), CircleShape)
-                                .clickable {
-                                    deleteCategory(index)
-                                },
+                                .clickable { deleteCategory(index) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text("-", color = Color.White, fontSize = 18.sp)
@@ -235,34 +213,32 @@ fun CategorySettingScreen(navController: NavHostController) {
                             Icons.Default.Menu,
                             contentDescription = "Reorder",
                             tint = Color.Gray,
-                            modifier = Modifier
-                                .pointerInput(Unit) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            draggedIndex = index
-                                        },
-                                        onDragEnd = {
-                                            if (draggedIndex != null && targetIndex != null &&
-                                                draggedIndex != targetIndex) {
-                                                moveCategory(draggedIndex!!, targetIndex!!)
-                                            }
-                                            draggedIndex = null
-                                            targetIndex = null
-                                        },
-                                        onDragCancel = {
-                                            draggedIndex = null
-                                            targetIndex = null
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            // Tính toán vị trí mục tiêu dựa trên drag amount
-                                            val itemHeight = 60.dp.toPx()
-                                            val offset = (dragAmount.y / itemHeight).toInt()
-                                            val newTarget = (index + offset).coerceIn(0, currentCategories.size - 1)
-                                            targetIndex = newTarget
+                            modifier = Modifier.pointerInput(Unit) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { draggedIndex = index },
+                                    onDragEnd = {
+                                        if (draggedIndex != null && targetIndex != null &&
+                                            draggedIndex != targetIndex
+                                        ) {
+                                            moveCategory(draggedIndex!!, targetIndex!!)
                                         }
-                                    )
-                                }
+                                        draggedIndex = null
+                                        targetIndex = null
+                                    },
+                                    onDragCancel = {
+                                        draggedIndex = null
+                                        targetIndex = null
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        val itemHeight = 60.dp.toPx()
+                                        val offset = (dragAmount.y / itemHeight).toInt()
+                                        val newTarget =
+                                            (index + offset).coerceIn(0, currentCategories.size - 1)
+                                        targetIndex = newTarget
+                                    }
+                                )
+                            }
                         )
                     }
                 }
