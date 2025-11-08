@@ -16,6 +16,7 @@ import com.example.money_manage_app.features.ui.screens.settings.userprofile.Edi
 import com.example.money_manage_app.features.ui.screens.settings.settings.ThemeSettingScreen
 import com.example.money_manage_app.features.ui.screens.settings.settings.LanguageSettingScreen
 import com.example.money_manage_app.features.ui.screens.settings.font.FontSizeScreen
+import com.example.money_manage_app.features.ui.screens.add.*
 
 @Composable
 fun NavGraph(
@@ -32,6 +33,7 @@ fun NavGraph(
     ) {
         composable(Routes.Home) { HomeScreen(navController) }
         composable(Routes.History) { HistoryScreen(navController) }
+        composable(Routes.Add) { AddScreen(navController) }
         composable(Routes.Report) { ReportScreen(navController) }
         composable(Routes.Profile) { ProfileScreen(navController) }
         composable(Routes.Settings) { SettingsScreen(navController) }
@@ -51,6 +53,7 @@ object Routes {
     const val Home = "home"
     const val History = "history"
     const val Report = "report"
+    const val Add = "add"
     const val Profile = "profile"
     const val Settings = "settings"
     const val UserProfile = "user_profile"
@@ -58,4 +61,5 @@ object Routes {
     const val ThemeSettings = "theme_settings"
     const val LanguageSettings = "language_settings"
     const val FontSizeSettings = "font_settings"
+
 }

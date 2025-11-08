@@ -1,11 +1,10 @@
 package com.example.money_manage_app.features.ui
 
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navOptions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -17,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.money_manage_app.R
 import com.example.money_manage_app.features.navigation.NavGraph
@@ -32,14 +31,14 @@ data class BottomNavItem(
 
 @Composable
 fun MainScreen() {
-    // ✅ Tạo NavController riêng cho phần bottom navigation
+
     val navController = rememberNavController()
 
     val items = listOf(
-        BottomNavItem("home", R.string.home, Icons.Default.Home),
-        BottomNavItem("history", R.string.history, Icons.Default.History),
-        BottomNavItem("report", R.string.report, Icons.Default.Article),
-        BottomNavItem("profile", R.string.profile, Icons.Default.Person)
+        BottomNavItem(Routes.Home, R.string.home, Icons.Default.Home),
+        BottomNavItem(Routes.History, R.string.history, Icons.Default.History),
+        BottomNavItem(Routes.Report, R.string.report, Icons.Default.Article),
+        BottomNavItem(Routes.Profile, R.string.profile, Icons.Default.Person)
     )
 
     val colors = MaterialTheme.colorScheme
@@ -49,47 +48,113 @@ fun MainScreen() {
     Scaffold(
         containerColor = colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+
         bottomBar = {
-            NavigationBar(
-                containerColor = colors.surface,
-                tonalElevation = 0.dp
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
 
-                items.forEach { item ->
-                    val selected = currentRoute == item.route
+            // ✅ Những màn hình sẽ ẩn BottomNav
+            val hideBottomBarRoutes = listOf(
+                Routes.Add,
+                Routes.Settings,
+                Routes.UserProfile,
+                Routes.EditProfile,
+                Routes.ThemeSettings,
+                Routes.LanguageSettings,
+                Routes.FontSizeSettings
+            )
 
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            if (currentRoute != item.route) {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+            val shouldShowBottomBar = currentRoute !in hideBottomBarRoutes
+
+            if (shouldShowBottomBar) {
+                NavigationBar(
+                    containerColor = colors.surface,
+                    tonalElevation = 0.dp
+                ) {
+
+                    val navEntry by navController.currentBackStackEntryAsState()
+                    val route = navEntry?.destination?.route
+
+                    // --- LEFT ITEMS: Home + History ---
+                    items.take(2).forEach { item ->
+                        val selected = route == item.route
+
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (route != item.route) {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = stringResource(item.titleRes),
+                                    tint = if (selected) activeColor else inactiveColor
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(item.titleRes),
+                                    color = if (selected) activeColor else inactiveColor
+                                )
                             }
-                        },
-                                icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = stringResource(item.titleRes),
-                                tint = if (selected) activeColor else inactiveColor
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = stringResource(item.titleRes),
-                                color = if (selected) activeColor else inactiveColor
-                            )
-                        }
-                    )
+                        )
+                    }
+
+                    // --- CENTER ADD BUTTON ---
+                    FloatingActionButton(
+                        onClick = { navController.navigate(Routes.Add) },
+                        containerColor = Color(0xFFFEE912),
+                        contentColor = Color.Black,
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 0.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add",
+                            tint = Color.Black
+                        )
+                    }
+
+                    // --- RIGHT ITEMS: Report + Profile ---
+                    items.takeLast(2).forEach { item ->
+                        val selected = route == item.route
+
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (route != item.route) {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = stringResource(item.titleRes),
+                                    tint = if (selected) activeColor else inactiveColor
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(item.titleRes),
+                                    color = if (selected) activeColor else inactiveColor
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
-        // ✅ NavGraph dùng navController riêng
         NavGraph(
             navController = navController,
             modifier = Modifier
