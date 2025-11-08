@@ -83,13 +83,13 @@ fun SettingsScreen(navController: NavHostController) {
             SettingItem(
                 icon = Icons.Default.Category,
                 title = stringResource(R.string.category_settings),
-                onClick = { /* TODO: navigate to category settings */ }
+                onClick = { navController.navigate(Routes.CategorySettings) }
             )
 
             SettingItem(
                 icon = Icons.Default.AttachMoney,
                 title = stringResource(R.string.currency),
-                onClick = { /* TODO: navigate to currency settings */ }
+                onClick = { navController.navigate(Routes.CurrencySettings) }
             )
 
             SettingItem(
