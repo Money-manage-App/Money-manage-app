@@ -13,8 +13,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -22,8 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.money_manage_app.data.local.datastore.CategoryPreference
-import com.example.money_manage_app.data.local.datastore.CategoryData
+import com.example.money_manage_app.data.local.datastore.*
 import kotlinx.coroutines.launch
 
 data class CategoryItem(val icon: ImageVector, val name: String, val iconName: String)
@@ -34,6 +33,14 @@ fun CategorySettingScreen(navController: NavHostController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val categoryPreference = remember { CategoryPreference(context) }
+
+    // 🔹 Thêm 2 dòng này
+    val themePref = remember { ThemePreference(context) }
+    val fontManager = remember { FontSizeManager(context) }
+
+    val isDark by themePref.isDarkMode.collectAsState(initial = false)
+    val fontScale by fontManager.fontSizeFlow.collectAsState(initial = 1f)
+    val colors = MaterialTheme.colorScheme
 
     var selectedTab by remember { mutableStateOf(0) }
     var expenseCategories by remember { mutableStateOf<List<CategoryItem>>(emptyList()) }
@@ -64,7 +71,6 @@ fun CategorySettingScreen(navController: NavHostController) {
     // Load dữ liệu từ DataStore
     LaunchedEffect(Unit) {
         categoryPreference.categoriesFlow.collect { saved ->
-            // saved là Map<String, List<CategoryData>>
             expenseCategories = saved["expense"]?.map { data ->
                 val icon = getIconFromName(data.iconName)
                 CategoryItem(icon, data.name, data.iconName)
@@ -77,7 +83,6 @@ fun CategorySettingScreen(navController: NavHostController) {
         }
     }
 
-    // Hàm lưu vào DataStore
     fun saveCategories() {
         scope.launch {
             val expenseData = expenseCategories.map { CategoryData(it.iconName, it.name) }
@@ -87,17 +92,15 @@ fun CategorySettingScreen(navController: NavHostController) {
         }
     }
 
-    // Hàm xóa danh mục
     fun deleteCategory(index: Int) {
-        if (selectedTab == 0) {
+        if (selectedTab == 0)
             expenseCategories = expenseCategories.toMutableList().apply { removeAt(index) }
-        } else {
+        else
             incomeCategories = incomeCategories.toMutableList().apply { removeAt(index) }
-        }
+
         saveCategories()
     }
 
-    // Hàm di chuyển danh mục
     fun moveCategory(fromIndex: Int, toIndex: Int) {
         if (selectedTab == 0) {
             val list = expenseCategories.toMutableList()
@@ -121,55 +124,56 @@ fun CategorySettingScreen(navController: NavHostController) {
                 title = {
                     Text(
                         text = "Cài đặt danh mục",
-                        color = Color.Black,
-                        fontSize = 20.sp
+                        color = colors.onPrimary,
+                        fontSize = (20.sp * fontScale)
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colors.onPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFFEE912)
+                    containerColor = colors.primary
                 )
             )
         },
-        containerColor = Color.White
+        containerColor = colors.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .background(colors.background)
         ) {
             // Tabs
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                contentColor = Color.Black
+                containerColor = colors.surfaceVariant,
+                contentColor = colors.onSurface
             ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Chi tiêu") }
+                    text = { Text("Chi tiêu", fontSize = (16.sp * fontScale)) }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Thu nhập") }
+                    text = { Text("Thu nhập", fontSize = (16.sp * fontScale)) }
                 )
             }
 
-            // Danh sách category với drag and drop
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                itemsIndexed(
-                    items = currentCategories,
-                    key = { index, item -> "${item.name}-$index" }
-                ) { index, category ->
+                itemsIndexed(currentCategories, key = { index, item -> "${item.name}-$index" }) { index, category ->
                     val isBeingDragged = draggedIndex == index
                     val elevation = if (isBeingDragged) 8.dp else 0.dp
 
@@ -182,7 +186,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                                 alpha = if (isBeingDragged) 0.8f else 1f
                             }
                             .background(
-                                if (targetIndex == index) Color(0xFFE0E0E0) else Color.Transparent,
+                                if (targetIndex == index) colors.surfaceVariant else Color.Transparent,
                                 RoundedCornerShape(8.dp)
                             )
                             .padding(4.dp),
@@ -192,36 +196,37 @@ fun CategorySettingScreen(navController: NavHostController) {
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
-                                .background(Color(0xFFD32F2F), CircleShape)
+                                .background(Color(0xFFEF5350), CircleShape)
                                 .clickable { deleteCategory(index) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("-", color = Color.White, fontSize = 18.sp)
+                            Text("-", color = colors.onError, fontSize = (18.sp * fontScale))
                         }
 
                         Spacer(modifier = Modifier.width(10.dp))
 
                         // Icon + Tên
-                        Icon(category.icon, contentDescription = category.name, tint = Color.Black)
+                        Icon(category.icon, contentDescription = category.name, tint = colors.onSurface)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(category.name, color = Color.Black, fontSize = 16.sp)
+                        Text(
+                            category.name,
+                            color = colors.onSurface,
+                            fontSize = (16.sp * fontScale)
+                        )
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        // Nút sắp xếp (drag handle)
+                        // Nút drag
                         Icon(
                             Icons.Default.Menu,
                             contentDescription = "Reorder",
-                            tint = Color.Gray,
+                            tint = colors.outline,
                             modifier = Modifier.pointerInput(Unit) {
                                 detectDragGesturesAfterLongPress(
                                     onDragStart = { draggedIndex = index },
                                     onDragEnd = {
-                                        if (draggedIndex != null && targetIndex != null &&
-                                            draggedIndex != targetIndex
-                                        ) {
+                                        if (draggedIndex != null && targetIndex != null && draggedIndex != targetIndex)
                                             moveCategory(draggedIndex!!, targetIndex!!)
-                                        }
                                         draggedIndex = null
                                         targetIndex = null
                                     },
@@ -251,12 +256,12 @@ fun CategorySettingScreen(navController: NavHostController) {
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFEE912),
-                            contentColor = Color.Black
+                            containerColor = colors.primary,
+                            contentColor = colors.onPrimary
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("+ Thêm danh mục")
+                        Text("+ Thêm danh mục", fontSize = (16.sp * fontScale))
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -265,7 +270,7 @@ fun CategorySettingScreen(navController: NavHostController) {
     }
 }
 
-// Helper function để map tên icon thành ImageVector
+// Helper function
 fun getIconFromName(iconName: String): ImageVector {
     return when (iconName) {
         "ShoppingCart" -> Icons.Default.ShoppingCart
