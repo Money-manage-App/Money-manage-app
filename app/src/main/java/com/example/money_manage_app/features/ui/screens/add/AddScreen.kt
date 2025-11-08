@@ -91,7 +91,7 @@ fun BottomActionBar() {
                 modifier = Modifier.size(56.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_keyboard),
+                    painter = painterResource(id = R.drawable.ic_note),
                     contentDescription = "Keyboard",
                     tint = Color.Gray,
                     modifier = Modifier.size(36.dp)
