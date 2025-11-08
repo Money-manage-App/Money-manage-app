@@ -1,19 +1,13 @@
 package com.example.money_manage_app.features.common.theme
 
 import androidx.compose.ui.platform.LocalContext
-import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.example.money_manage_app.features.common.theme.*
-import com.example.money_manage_app.features.settings.screens.data.ThemePreference
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 // 🎨 Màu sáng
 private val LightColorScheme = lightColorScheme(

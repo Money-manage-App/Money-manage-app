@@ -6,16 +6,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
-import com.example.money_manage_app.features.home.screens.HomeScreen
-import com.example.money_manage_app.features.history.screens.HistoryScreen
-import com.example.money_manage_app.features.report.screens.ReportScreen
-import com.example.money_manage_app.features.profile.screens.ProfileScreen
-import com.example.money_manage_app.features.settings.screens.settings.SettingsScreen
-import com.example.money_manage_app.features.settings.screens.userprofile.UserProfileScreen
-import com.example.money_manage_app.features.settings.screens.userprofile.EditProfileScreen
-import com.example.money_manage_app.features.settings.screens.settings.ThemeSettingScreen
-import com.example.money_manage_app.features.settings.screens.settings.LanguageSettingScreen
-import com.example.money_manage_app.features.settings.screens.font.FontSizeScreen
+import com.example.money_manage_app.features.ui.screens.home.HomeScreen
+import com.example.money_manage_app.features.ui.screens.history.HistoryScreen
+import com.example.money_manage_app.features.ui.screens.report.ReportScreen
+import com.example.money_manage_app.features.ui.screens.profile.ProfileScreen
+import com.example.money_manage_app.features.ui.screens.settings.settings.SettingsScreen
+import com.example.money_manage_app.features.ui.screens.settings.userprofile.UserProfileScreen
+import com.example.money_manage_app.features.ui.screens.settings.userprofile.EditProfileScreen
+import com.example.money_manage_app.features.ui.screens.settings.settings.ThemeSettingScreen
+import com.example.money_manage_app.features.ui.screens.settings.settings.LanguageSettingScreen
+import com.example.money_manage_app.features.ui.screens.settings.font.FontSizeScreen
 
 @Composable
 fun NavGraph(

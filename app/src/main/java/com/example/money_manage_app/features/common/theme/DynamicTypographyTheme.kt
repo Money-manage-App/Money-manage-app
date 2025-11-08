@@ -8,8 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
-import com.example.money_manage_app.features.settings.data.FontSizeManager
-
+import com.example.money_manage_app.data.local.datastore.*
 @Composable
 fun DynamicTypographyTheme(
     content: @Composable () -> Unit
