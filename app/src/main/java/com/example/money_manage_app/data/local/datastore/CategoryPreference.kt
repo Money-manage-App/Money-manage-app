@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -18,6 +19,13 @@ data class CategoryData(
 class CategoryPreference(private val context: Context) {
 
     private val KEY = stringPreferencesKey("categories")
+
+    private val jsonFormatter = Json {
+        prettyPrint = false
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
 
     // Danh mục mặc định
     private val defaultExpenseCategories = listOf(
@@ -63,7 +71,7 @@ class CategoryPreference(private val context: Context) {
     // Hàm lưu Map<String, List<CategoryData>> vào DataStore
     suspend fun save(data: Map<String, List<CategoryData>>) {
         context.appDataStore.edit { preferences ->
-            preferences[KEY] = Json.encodeToString(data) // dùng inline reified type
+            preferences[KEY] = jsonFormatter.encodeToString(data)
         }
     }
 
@@ -75,5 +83,15 @@ class CategoryPreference(private val context: Context) {
                 "income" to defaultIncomeCategories
             )
         )
+    }
+
+    // Hàm thêm mới danh mục
+    suspend fun saveNewCategory(type: String, category: CategoryData) {
+        val current = categoriesFlow.first()
+        val updated = current.toMutableMap()
+        val list = updated[type]?.toMutableList() ?: mutableListOf()
+        list.add(category)
+        updated[type] = list
+        save(updated)
     }
 }

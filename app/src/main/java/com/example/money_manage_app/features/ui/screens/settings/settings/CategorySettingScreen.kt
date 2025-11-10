@@ -1,5 +1,6 @@
 package com.example.money_manage_app.features.ui.screens.settings.settings
 
+import com.example.money_manage_app.features.navigation.Routes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -251,7 +252,12 @@ fun CategorySettingScreen(navController: NavHostController) {
                 item {
                     Spacer(modifier = Modifier.height(20.dp))
                     Button(
-                        onClick = { /* TODO: thêm danh mục */ },
+                        onClick = {
+                            if (selectedTab == 0)
+                                navController.navigate(Routes.AddExpenseCategory)
+                            else
+                                navController.navigate(Routes.AddIncomeCategory)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
@@ -273,19 +279,30 @@ fun CategorySettingScreen(navController: NavHostController) {
 // Helper function
 fun getIconFromName(iconName: String): ImageVector {
     return when (iconName) {
-        "ShoppingCart" -> Icons.Default.ShoppingCart
-        "SportsEsports" -> Icons.Default.SportsEsports
-        "Checkroom" -> Icons.Default.Checkroom
-        "Pets" -> Icons.Default.Pets
+        // Chi tiêu
         "Restaurant" -> Icons.Default.Restaurant
+        "LocalBar" -> Icons.Default.LocalBar
+        "Flight" -> Icons.Default.Flight
+        "Movie" -> Icons.Default.Movie
+        "ShoppingCart" -> Icons.Default.ShoppingCart
+        "LocalGasStation" -> Icons.Default.LocalGasStation
+        "FitnessCenter" -> Icons.Default.FitnessCenter
         "SportsSoccer" -> Icons.Default.SportsSoccer
-        "Favorite" -> Icons.Default.Favorite
-        "Build" -> Icons.Default.Build
-        "CardGiftcard" -> Icons.Default.CardGiftcard
-        "Money" -> Icons.Default.Money
+        "EmojiFoodBeverage" -> Icons.Default.EmojiFoodBeverage
+
+        // Thu nhập
+        "AttachMoney" -> Icons.Default.AttachMoney
+        "Work" -> Icons.Default.Work
+        "Star" -> Icons.Default.Star
+        "AccountBalance" -> Icons.Default.AccountBalance
         "Savings" -> Icons.Default.Savings
-        "Schedule" -> Icons.Default.Schedule
-        "MoreHoriz" -> Icons.Default.MoreHoriz
+        "TrendingUp" -> Icons.Default.TrendingUp
+        "MilitaryTech" -> Icons.Default.MilitaryTech
+        "Favorite" -> Icons.Default.Favorite
+        "AutoAwesome" -> Icons.Default.AutoAwesome
+
+        // Dự phòng
         else -> Icons.Default.Category
     }
 }
+
