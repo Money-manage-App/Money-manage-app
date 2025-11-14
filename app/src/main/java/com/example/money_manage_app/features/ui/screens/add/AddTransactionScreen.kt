@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,9 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 
 data class Category(
@@ -29,12 +33,10 @@ data class Category(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(navController: NavHostController) {
-    var selectedTab by remember { mutableStateOf(0) } // 0 = Chi tiêu, 1 = Thu nhập
+    var selectedTab by remember { mutableStateOf(0) }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
-    var amount by remember { mutableStateOf("0") }
-    var note by remember { mutableStateOf("") }
+    var showInputDialog by remember { mutableStateOf(false) }
 
-    // Danh sách categories cho Chi tiêu
     val expenseCategories = listOf(
         Category("Ăn uống", Icons.Default.ShoppingCart),
         Category("Đi lại", Icons.Default.DirectionsCar),
@@ -47,7 +49,6 @@ fun AddTransactionScreen(navController: NavHostController) {
         Category("Bảo hiểm", Icons.Default.Security)
     )
 
-    // Danh sách categories cho Thu nhập
     val incomeCategories = listOf(
         Category("Lương", Icons.Default.AccountBalance, false),
         Category("Khoản tiết kiệm", Icons.Default.Savings, false),
@@ -57,12 +58,29 @@ fun AddTransactionScreen(navController: NavHostController) {
 
     val categories = if (selectedTab == 0) expenseCategories else incomeCategories
 
+    if (showInputDialog && selectedCategory != null) {
+        TransactionInputDialog(
+            category = selectedCategory!!,
+            onDismiss = {
+                showInputDialog = false
+                selectedCategory = null
+            },
+            onConfirm = { amount, note ->
+                showInputDialog = false
+                selectedCategory = null
+                navController.navigate("history") {
+                    // Xóa toàn bộ stack để không thể back lại màn hình Add
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header vàng
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,14 +111,12 @@ fun AddTransactionScreen(navController: NavHostController) {
             }
         }
 
-        // Tab Chi tiêu / Thu nhập - Nền xám chung
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .padding(top = 12.dp)
         ) {
-            // Nền xám cho cả 2 tab
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -108,26 +124,17 @@ fun AddTransactionScreen(navController: NavHostController) {
                     .background(Color(0xFFE8E8E8), RoundedCornerShape(6.dp))
             ) {}
 
-            // Các tab button đè lên nền xám
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
                 TabButton(
                     text = "Chi tiêu",
                     isSelected = selectedTab == 0,
-                    onClick = {
-                        selectedTab = 0
-                        selectedCategory = null
-                    },
+                    onClick = { selectedTab = 0 },
                     modifier = Modifier.weight(1f)
                 )
                 TabButton(
                     text = "Thu nhập",
                     isSelected = selectedTab == 1,
-                    onClick = {
-                        selectedTab = 1
-                        selectedCategory = null
-                    },
+                    onClick = { selectedTab = 1 },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -135,7 +142,6 @@ fun AddTransactionScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Grid categories - 4 cột
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,12 +155,14 @@ fun AddTransactionScreen(navController: NavHostController) {
                     rowCategories.forEach { category ->
                         CategoryItem(
                             category = category,
-                            isSelected = selectedCategory == category,
-                            onClick = { selectedCategory = category },
+                            isSelected = false,
+                            onClick = {
+                                selectedCategory = category
+                                showInputDialog = true
+                            },
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    // Thêm spacer nếu hàng không đủ 4 items
                     repeat(4 - rowCategories.size) {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -162,58 +170,235 @@ fun AddTransactionScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.weight(1f))
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TransactionInputDialog(
+    category: Category,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    var amount by remember { mutableStateOf("0") }
+    var note by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
-        // Amount display với viền trên
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White),
-            horizontalAlignment = Alignment.End
+    var selectedCalendar by remember {
+        mutableStateOf(java.util.Calendar.getInstance())
+    }
+
+    val currentDateTime by remember {
+        derivedStateOf {
+            val day = selectedCalendar.get(java.util.Calendar.DAY_OF_MONTH)
+            val month = selectedCalendar.get(java.util.Calendar.MONTH) + 1
+            val year = selectedCalendar.get(java.util.Calendar.YEAR)
+            val hour = selectedCalendar.get(java.util.Calendar.HOUR_OF_DAY)
+            val minute = selectedCalendar.get(java.util.Calendar.MINUTE)
+            "${String.format("%02d", day)}/${String.format("%02d", month)}/$year ${String.format("%02d:%02d", hour, minute)}"
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedCalendar.timeInMillis
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val newCalendar = java.util.Calendar.getInstance()
+                        newCalendar.timeInMillis = millis
+                        newCalendar.set(java.util.Calendar.HOUR_OF_DAY, selectedCalendar.get(java.util.Calendar.HOUR_OF_DAY))
+                        newCalendar.set(java.util.Calendar.MINUTE, selectedCalendar.get(java.util.Calendar.MINUTE))
+                        selectedCalendar = newCalendar
+                    }
+                    showDatePicker = false
+                    showTimePicker = true
+                }) {
+                    Text("OK", color = Color(0xFFFFD600))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Hủy", color = Color.Gray)
+                }
+            }
         ) {
-            Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
-
-            Text(
-                text = amount,
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color.Black,
-                modifier = Modifier.padding(end = 24.dp, top = 16.dp)
-            )
-
-            Text(
-                text = if (note.isEmpty()) "Ghi chú :  Nhập ghi chú..." else "Ghi chú :  $note",
-                fontSize = 13.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(end = 24.dp, top = 4.dp, bottom = 16.dp)
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = Color(0xFFFFD600),
+                    todayContentColor = Color(0xFFFFD600),
+                    todayDateBorderColor = Color(0xFFFFD600)
+                )
             )
         }
+    }
 
-        Divider(thickness = 1.dp, color = Color(0xFFE0E0E0))
-
-        // Number pad
-        NumberPad(
-            onNumberClick = { number ->
-                if (amount == "0") {
-                    amount = number
-                } else {
-                    amount += number
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = selectedCalendar.get(java.util.Calendar.HOUR_OF_DAY),
+            initialMinute = selectedCalendar.get(java.util.Calendar.MINUTE),
+            is24Hour = true
+        )
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Chọn giờ") },
+            text = {
+                TimePicker(
+                    state = timePickerState,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = Color(0xFFFFF9C4),
+                        selectorColor = Color(0xFFFFD600),
+                        timeSelectorSelectedContainerColor = Color(0xFFFFD600)
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val newCalendar = selectedCalendar.clone() as java.util.Calendar
+                    newCalendar.set(java.util.Calendar.HOUR_OF_DAY, timePickerState.hour)
+                    newCalendar.set(java.util.Calendar.MINUTE, timePickerState.minute)
+                    selectedCalendar = newCalendar
+                    showTimePicker = false
+                }) {
+                    Text("OK", color = Color(0xFFFFD600))
                 }
             },
-            onDeleteClick = {
-                if (amount.isNotEmpty()) {
-                    amount = if (amount.length == 1) "0" else amount.dropLast(1)
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Hủy", color = Color.Gray)
                 }
-            },
-            onClearClick = {
-                amount = "0"
-            },
-            onConfirmClick = {
-                // TODO: Lưu giao dịch
-                navController.popBackStack()
             }
         )
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xFFFFD600), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = category.icon,
+                            contentDescription = category.name,
+                            tint = Color.Black,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = category.name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+                        .clickable { showDatePicker = true }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = "Time",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = currentDateTime,
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = "Pick Date",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Số tiền") },
+                    placeholder = { Text("0") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFFFD600),
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedLabelColor = Color(0xFFFFD600)
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Ghi chú") },
+                    placeholder = { Text("Nhập ghi chú...") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFFFD600),
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedLabelColor = Color(0xFFFFD600)
+                    ),
+                    maxLines = 3
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Hủy", color = Color.Gray)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { onConfirm(amount, note) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFD600)
+                        )
+                    ) {
+                        Text("Xác nhận", color = Color.Black)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -286,156 +471,6 @@ fun CategoryItem(
             color = Color.Black,
             textAlign = TextAlign.Center,
             maxLines = 1
-        )
-    }
-}
-
-@Composable
-fun NumberPad(
-    onNumberClick: (String) -> Unit,
-    onDeleteClick: () -> Unit,
-    onClearClick: () -> Unit,
-    onConfirmClick: () -> Unit
-) {
-    val currentDate = remember {
-        val calendar = java.util.Calendar.getInstance()
-        val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
-        val month = calendar.get(java.util.Calendar.MONTH) + 1
-        Triple(day, month, calendar.get(java.util.Calendar.YEAR))
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(horizontal = 20.dp, vertical = 16.dp)
-    ) {
-        // Row 1: 7, 8, 9, date
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            NumberButton("7", onClick = { onNumberClick("7") }, modifier = Modifier.weight(1f))
-            NumberButton("8", onClick = { onNumberClick("8") }, modifier = Modifier.weight(1f))
-            NumberButton("9", onClick = { onNumberClick("9") }, modifier = Modifier.weight(1f))
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .background(Color(0xFFFFF9C4), RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text("${currentDate.first} Thg ${currentDate.second}", fontSize = 8.sp, color = Color(0xFF888888))
-                    Text("${currentDate.first}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                    Text("${currentDate.third}", fontSize = 8.sp, color = Color(0xFF888888))
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Row 2: 4, 5, 6, +
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            NumberButton("4", onClick = { onNumberClick("4") }, modifier = Modifier.weight(1f))
-            NumberButton("5", onClick = { onNumberClick("5") }, modifier = Modifier.weight(1f))
-            NumberButton("6", onClick = { onNumberClick("6") }, modifier = Modifier.weight(1f))
-            OperatorButton("+", modifier = Modifier.weight(1f))
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Row 3: 1, 2, 3, -
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            NumberButton("1", onClick = { onNumberClick("1") }, modifier = Modifier.weight(1f))
-            NumberButton("2", onClick = { onNumberClick("2") }, modifier = Modifier.weight(1f))
-            NumberButton("3", onClick = { onNumberClick("3") }, modifier = Modifier.weight(1f))
-            OperatorButton("-", modifier = Modifier.weight(1f))
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Row 4: ,, 0, delete, confirm
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            NumberButton(",", onClick = { onNumberClick(".") }, modifier = Modifier.weight(1f))
-            NumberButton("0", onClick = { onNumberClick("0") }, modifier = Modifier.weight(1f))
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .background(Color(0xFFFAFAFA), RoundedCornerShape(4.dp))
-                    .clickable(onClick = onDeleteClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Backspace,
-                    contentDescription = "Delete",
-                    tint = Color.Black,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .background(Color(0xFFDDDDDD), RoundedCornerShape(4.dp))
-                    .clickable(onClick = onConfirmClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
-                    tint = Color.Black,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun NumberButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .background(Color(0xFFFAFAFA), RoundedCornerShape(4.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Normal,
-            color = Color.Black
-        )
-    }
-}
-
-@Composable
-fun OperatorButton(text: String, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .background(Color(0xFFFAFAFA), RoundedCornerShape(4.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Normal,
-            color = Color.Black
         )
     }
 }
