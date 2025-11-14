@@ -61,7 +61,8 @@ fun MainScreen() {
                 Routes.EditProfile,
                 Routes.ThemeSettings,
                 Routes.LanguageSettings,
-                Routes.FontSizeSettings
+                Routes.FontSizeSettings,
+                Routes.AddTransaction
             )
 
             val shouldShowBottomBar = currentRoute !in hideBottomBarRoutes

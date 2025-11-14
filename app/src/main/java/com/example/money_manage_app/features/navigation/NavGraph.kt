@@ -56,6 +56,8 @@ fun NavGraph(
         composable(Routes.AddExpenseCategory) { AddExpenseCategoryScreen(navController) }
         composable(Routes.AddIncomeCategory) { AddIncomeCategoryScreen(navController) }
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
+
+        composable(Routes.AddTransaction) { AddTransactionScreen(navController) }
     }
 }
 
@@ -72,6 +74,8 @@ object Routes {
     const val LanguageSettings = "language_settings"
     const val FontSizeSettings = "font_settings"
     const val CategorySettings = "category_settings"
+
+    const val AddTransaction = "add_transaction"
     const val AddExpenseCategory = "add_expense_category"
     const val AddIncomeCategory = "add_income_category"
     const val CurrencySettings = "currency_settings"
