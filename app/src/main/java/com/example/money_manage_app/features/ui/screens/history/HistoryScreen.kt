@@ -1,12 +1,9 @@
 package com.example.money_manage_app.features.ui.screens.history
 
-import android.app.DatePickerDialog
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +21,7 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.money_manage_app.R
+import androidx.compose.material.icons.filled.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,140 +34,186 @@ data class Transaction(
     val time: String
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(navController: NavHostController) {
     val calendar = Calendar.getInstance()
-    var selectedDate by remember { mutableStateOf(calendar.time) }
-    val context = LocalContext.current
+    var selectedDate by remember { mutableStateOf(calendar.timeInMillis) }
+    var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
 
     // Danh sách trống để hiển thị trạng thái "Không tìm thấy giao dịch nào"
     val transactions = remember { mutableStateListOf<Transaction>() }
 
-    // Tạo DatePickerDialog
-    val datePickerDialog = DatePickerDialog(
-        context,
-        { _, year, month, day ->
-            calendar.set(year, month, day)
-            selectedDate = calendar.time
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
+    // State cho DatePicker
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = selectedDate
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Header vàng
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFFFFD600),
-            shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
-            shadowElevation = 6.dp
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Header vàng với bo góc
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 20.dp),
-                contentAlignment = Alignment.CenterStart
+                    .background(
+                        color = Color(0xFFFFE500),
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    )
+                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 40.dp)
             ) {
                 Text(
                     text = "Lịch sử",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.padding(start = 20.dp)
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
                 )
             }
-        }
 
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Ô chọn ngày
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, Color.LightGray),
-            color = Color.White,
-            shadowElevation = 2.dp,
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            // Ô chọn ngày nằm một phần trên nền vàng
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, Color.LightGray),
+                color = Color.White,
+                shadowElevation = 2.dp,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .offset(y = (-24).dp)
             ) {
-                Text(
-                    text = dateFormatter.format(selectedDate),
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = { datePickerDialog.show() }) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = "Chọn ngày",
-                        tint = Color.Gray
-                    )
-                }
-            }
-        }
-
-        // Tiêu đề danh sách
-        Text(
-            text = "Danh Sách Giao Dịch",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp)
-        )
-
-        // Khi không có giao dịch
-        if (transactions.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_empty_state),
-                    contentDescription = "Empty",
-                    modifier = Modifier.size(120.dp)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Không tìm thấy giao dịch nào",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = { navController.navigate("add") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3C2E7E)),
-                    shape = RoundedCornerShape(24.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
                 ) {
                     Text(
-                        text = "+ Thêm giao dịch",
+                        text = dateFormatter.format(Date(selectedDate)),
                         fontSize = 16.sp,
-                        color = Color.Yellow
+                        color = Color.Black,
+                        modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = "Chọn ngày",
+                            tint = Color.Gray
+                        )
+                    }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(-12.dp))
+
+            // Tiêu đề danh sách
+            Text(
+                text = "Danh Sách Giao Dịch",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp)
+            )
+
+            // Khi không có giao dịch
+            if (transactions.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_empty_state),
+                        contentDescription = "Empty",
+                        modifier = Modifier.size(120.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Không tìm thấy giao dịch nào",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { navController.navigate("add") },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A4A4A)),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "+ ",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFD600)
+                        )
+                        Text(
+                            text = "Thêm giao dịch",
+                            fontSize = 15.sp,
+                            color = Color.Yellow
+                        )
+                    }
+                }
+            } else {
+                // Danh sách giao dịch khi có data
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp)
+                ) {
+                    items(transactions) { transaction ->
+                        TransactionItem(transaction = transaction)
+                    }
+                }
+            }
+        }
+
+        // Calendar Popup Dialog
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let {
+                                selectedDate = it
+                            }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("OK", color = Color(0xFF3C2E7E))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Hủy", color = Color.Gray)
+                    }
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = Color.White
+                )
+            ) {
+                DatePicker(
+                    state = datePickerState,
+                    colors = DatePickerDefaults.colors(
+                        selectedDayContainerColor = Color(0xFF3C2E7E),
+                        todayContentColor = Color(0xFF3C2E7E),
+                        todayDateBorderColor = Color(0xFF3C2E7E)
+                    )
+                )
             }
         }
     }
 }
-
 
 @Composable
 fun TransactionItem(transaction: Transaction) {
@@ -194,3 +238,5 @@ fun TransactionItem(transaction: Transaction) {
     }
     Divider(thickness = 1.dp, color = Color.LightGray)
 }
+
+
