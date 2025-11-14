@@ -1,10 +1,7 @@
 package com.example.money_manage_app.features.ui.screens.report
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.TextButton
-import android.annotation.SuppressLint
+import android.app.DatePickerDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,92 +13,111 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.money_manage_app.R
 import java.text.SimpleDateFormat
 import java.util.*
 
-@SuppressLint("SimpleDateFormat")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportScreen(navController: NavHostController) {
-    val colors = MaterialTheme.colorScheme
 
-    // Bộ định dạng ngày tháng
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy") }
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    // Trạng thái Date Range Picker
-    val dateRangePickerState = rememberDateRangePickerState()
+    var startDate by remember { mutableStateOf<Date?>(null) }
+    var endDate by remember { mutableStateOf<Date?>(null) }
 
-    // Hiển thị dialog hay không
-    var showDialog by remember { mutableStateOf(false) }
+    var selectingStart by remember { mutableStateOf(true) }
 
-    // Lưu giá trị hiển thị ra giao diện
-    val startDate = dateRangePickerState.selectedStartDateMillis?.let { dateFormatter.format(Date(it)) }
-    val endDate = dateRangePickerState.selectedEndDateMillis?.let { dateFormatter.format(Date(it)) }
+    // --- Dialog chọn ngày ---
+    fun showDatePicker(onDateSelected: (Date) -> Unit) {
+        DatePickerDialog(
+            context,
+            { _, year, month, day ->
+                calendar.set(year, month, day)
+                onDateSelected(calendar.time)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
 
-    // --- GIAO DIỆN CHÍNH ---
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.background)
-            .padding(horizontal = 16.dp)
+            .padding(16.dp)
     ) {
+
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ✅ CHỌN NGÀY (bấm mở Date Range Picker)
-        ElevatedCard(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFFFEE912)),
+        // Ô chọn khoảng ngày
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color.LightGray),
+            color = Color.White,
+            shadowElevation = 2.dp,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showDialog = true } // 👈 Thêm sự kiện mở DatePicker
+                .height(50.dp)
+                .clickable {
+                    if (startDate == null) {
+                        // Chọn ngày bắt đầu
+                        selectingStart = true
+                        showDatePicker { date ->
+                            startDate = date
+                        }
+                    } else {
+                        // Chọn ngày kết thúc
+                        selectingStart = false
+                        showDatePicker { date ->
+                            endDate = date
+                        }
+                    }
+                }
         ) {
             Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
             ) {
-                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.Black)
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (startDate != null && endDate != null)
-                        "$startDate - $endDate"
-                    else
-                        stringResource(R.string.report_date_range),
-                    color = Color.Black,
+                    text = when {
+                        startDate == null -> "Chọn khoảng thời gian"
+                        endDate == null -> "${dateFormatter.format(startDate!!)} - ..."
+                        else -> "${dateFormatter.format(startDate!!)} - ${dateFormatter.format(endDate!!)}"
+                    },
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.Black,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = Color.Gray
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        // ✅ TỔNG SỐ DƯ
+        // Card tổng và chi tiết
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colors.surface)
+            shape = RoundedCornerShape(20.dp)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = stringResource(R.string.total_balance),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
+                Text("Tổng số dư", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "xxx.xxx.xxx đ",
-                    color = Color(0xFF2ECC71),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("xxx.xxx.xxx đ", color = Color(0xFF2ECC71), fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -110,7 +126,7 @@ fun ReportScreen(navController: NavHostController) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    // ✅ Ô CHI TIÊU
+                    // Chi tiêu
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -118,26 +134,14 @@ fun ReportScreen(navController: NavHostController) {
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            stringResource(R.string.expense),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "x.xxx.xxx đ",
-                            color = Color(0xFFE74C3C),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            stringResource(R.string.average_per_day, "xxx.xxx"),
-                            fontSize = 12.sp,
-                            color = Color.DarkGray
-                        )
+                        Text("Chi tiêu", fontWeight = FontWeight.Bold)
+                        Text("x.xxx.xxx đ", color = Color(0xFFE74C3C), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("Trung bình/ngày: xxx.xxx", fontSize = 12.sp, color = Color.DarkGray)
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // ✅ Ô THU NHẬP
+                    // Thu nhập
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -145,40 +149,12 @@ fun ReportScreen(navController: NavHostController) {
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            stringResource(R.string.income),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "x.xxx.xxx đ",
-                            color = Color(0xFF27AE60),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            stringResource(R.string.average_per_day, "xxx.xxx"),
-                            fontSize = 12.sp,
-                            color = Color.DarkGray
-                        )
+                        Text("Thu nhập", fontWeight = FontWeight.Bold)
+                        Text("x.xxx.xxx đ", color = Color(0xFF27AE60), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("Trung bình/ngày: xxx.xxx", fontSize = 12.sp, color = Color.DarkGray)
                     }
                 }
             }
         }
-    }
-
-    // --- DIALOG CHỌN NGÀY ---
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            confirmButton = {
-                TextButton(onClick = { showDialog = false }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Hủy") }
-            },
-            text = {
-                DateRangePicker(state = dateRangePickerState)
-            }
-        )
     }
 }
