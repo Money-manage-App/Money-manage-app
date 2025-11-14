@@ -27,6 +27,11 @@
     <string name="home">Trang chủ</string>
     <string name="history">Lịch sử</string>
     <string name="report">Báo cáo</string>
+    <string name="report_date_range">Chọn khoảng thời gian</string>
+    <string name="total_balance">Tổng số dư</string>
+    <string name="expense">Chi tiêu</string>
+    <string name="income">Thu nhập</string>
+    <string name="average_per_day">Trung bình: %1$s đ/ngày</string>
 
     <string name="gender">Giới tính</string>
     <string name="male">Nam</string>
@@ -37,10 +42,4 @@
     <string name="no_birthday">Chưa có ngày sinh</string>
 
     <string name="logout">Đăng xuất</string>
-
-    <string name="report_date_range">28/9 - 1/10/2025</string>
-    <string name="total_balance">Tổng số dư</string>
-    <string name="expense">Chi tiêu</string>
-    <string name="income">Thu nhập</string>
-    <string name="average_per_day">Trung bình: %1$s đ/ngày</string>
 </resources>

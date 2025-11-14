@@ -28,6 +28,11 @@
     <string name="home">Home</string>
     <string name="history">History</string>
     <string name="report">Report</string>
+    <string name="report_date_range">Select date range</string>
+    <string name="total_balance">Total Balance</string>
+    <string name="expense">Expense</string>
+    <string name="income">Income</string>
+    <string name="average_per_day">Average: %1$s VND/day</string>
 
     <string name="gender">Gender</string>
     <string name="male">Male</string>
@@ -38,10 +43,4 @@
     <string name="no_birthday">No birthday</string>
 
     <string name="logout">Logout</string>
-
-    <string name="report_date_range">Sep 28 - Oct 1, 2025</string>
-    <string name="total_balance">Total Balance</string>
-    <string name="expense">Expense</string>
-    <string name="income">Income</string>
-    <string name="average_per_day">Average: %1$s VND/day</string>
 </resources>
