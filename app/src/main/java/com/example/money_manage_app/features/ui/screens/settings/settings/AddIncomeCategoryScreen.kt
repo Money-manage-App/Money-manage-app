@@ -1,6 +1,7 @@
 package com.example.money_manage_app.features.ui.screens.settings.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -100,27 +103,71 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
             Spacer(Modifier.height(24.dp))
 
             Text(iconTitleText, fontSize = 18.sp * fontScale, color = colors.onSurface)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                iconList.forEach { (icon, iconName) ->
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .background(
-                                if (selectedIconName == iconName) colors.primary else colors.surfaceVariant,
-                                CircleShape
-                            )
-                            .clickable { selectedIconName = iconName },
-                        contentAlignment = Alignment.Center
+            // Grille d'icônes comme dans AddTransactionScreen
+            Column(modifier = Modifier.fillMaxWidth()) {
+                iconList.chunked(4).forEach { rowIcons ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Icon(icon, contentDescription = iconName, tint = colors.onSurface)
+                        rowIcons.forEach { (icon, iconName) ->
+                            IconGridItem(
+                                icon = icon,
+                                iconName = iconName,
+                                isSelected = selectedIconName == iconName,
+                                onClick = { selectedIconName = iconName },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        // Remplir les espaces vides
+                        repeat(4 - rowIcons.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
+    }
+}
+
+@Composable
+fun IconGridItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconName: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    color = if (isSelected) colors.primary else Color.Transparent,
+                    shape = CircleShape
+                )
+                .border(
+                    width = if (isSelected) 0.dp else 1.dp,
+                    color = colors.outline.copy(alpha = 0.3f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = iconName,
+                tint = if (isSelected) colors.onPrimary else colors.onSurface,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
     }
 }

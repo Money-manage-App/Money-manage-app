@@ -68,9 +68,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-text:1.7.0")
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
     implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-    implementation("androidx.compose.material3:material3:1.2.0")
+
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
 }

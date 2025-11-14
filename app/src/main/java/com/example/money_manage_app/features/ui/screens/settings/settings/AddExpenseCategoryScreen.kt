@@ -1,6 +1,7 @@
 package com.example.money_manage_app.features.ui.screens.settings.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,15 +38,22 @@ fun AddExpenseCategoryScreen(navController: NavHostController) {
     var selectedIconName by remember { mutableStateOf("ShoppingCart") }
 
     val iconList = listOf(
-        Icons.Default.Restaurant to "Restaurant",
-        Icons.Default.LocalBar to "LocalBar",
-        Icons.Default.Flight to "Flight",
-        Icons.Default.Movie to "Movie",
         Icons.Default.ShoppingCart to "ShoppingCart",
+        Icons.Default.Restaurant to "Restaurant",
+        Icons.Default.DirectionsCar to "DirectionsCar",
         Icons.Default.LocalGasStation to "LocalGasStation",
+        Icons.Default.Checkroom to "Checkroom",
+        Icons.Default.Home to "Home",
+        Icons.Default.Receipt to "Receipt",
         Icons.Default.FitnessCenter to "FitnessCenter",
+        Icons.Default.Favorite to "Favorite",
+        Icons.Default.Build to "Build",
+        Icons.Default.Security to "Security",
+        Icons.Default.CardGiftcard to "CardGiftcard",
+        Icons.Default.Pets to "Pets",
+        Icons.Default.SportsEsports to "SportsEsports",
         Icons.Default.SportsSoccer to "SportsSoccer",
-        Icons.Default.EmojiFoodBeverage to "EmojiFoodBeverage"
+        Icons.Default.Movie to "Movie"
     )
 
     val titleText = if (language == "English") "Add Expense Category" else "Thêm danh mục chi tiêu"
@@ -100,27 +109,69 @@ fun AddExpenseCategoryScreen(navController: NavHostController) {
             Spacer(Modifier.height(24.dp))
 
             Text(iconTitleText, fontSize = 18.sp * fontScale, color = colors.onSurface)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                iconList.forEach { (icon, iconName) ->
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .background(
-                                if (selectedIconName == iconName) colors.primary else colors.surfaceVariant,
-                                CircleShape
-                            )
-                            .clickable { selectedIconName = iconName },
-                        contentAlignment = Alignment.Center
+            // Grille d'icônes
+            Column(modifier = Modifier.fillMaxWidth()) {
+                iconList.chunked(4).forEach { rowIcons ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Icon(icon, contentDescription = iconName, tint = colors.onSurface)
+                        rowIcons.forEach { (icon, iconName) ->
+                            ExpenseIconItem(
+                                icon = icon,
+                                iconName = iconName,
+                                isSelected = selectedIconName == iconName,
+                                onClick = { selectedIconName = iconName },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        repeat(4 - rowIcons.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ExpenseIconItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconName: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    color = if (isSelected) colors.primary else Color.Transparent,
+                    shape = CircleShape
+                )
+                .border(
+                    width = if (isSelected) 0.dp else 1.dp,
+                    color = colors.outline.copy(alpha = 0.3f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = iconName,
+                tint = if (isSelected) colors.onPrimary else colors.onSurface,
+                modifier = Modifier.size(28.dp)
+            )
         }
     }
 }

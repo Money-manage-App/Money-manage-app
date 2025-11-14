@@ -35,7 +35,6 @@ fun CategorySettingScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val categoryPreference = remember { CategoryPreference(context) }
 
-    // 🔹 Thêm 2 dòng này
     val themePref = remember { ThemePreference(context) }
     val fontManager = remember { FontSizeManager(context) }
 
@@ -47,7 +46,7 @@ fun CategorySettingScreen(navController: NavHostController) {
     var expenseCategories by remember { mutableStateOf<List<CategoryItem>>(emptyList()) }
     var incomeCategories by remember { mutableStateOf<List<CategoryItem>>(emptyList()) }
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
-    var targetIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableStateOf(0f) }
 
     // Danh mục mặc định
     val defaultExpenseCategories = listOf(
@@ -103,6 +102,8 @@ fun CategorySettingScreen(navController: NavHostController) {
     }
 
     fun moveCategory(fromIndex: Int, toIndex: Int) {
+        if (fromIndex == toIndex) return
+
         if (selectedTab == 0) {
             val list = expenseCategories.toMutableList()
             val item = list.removeAt(fromIndex)
@@ -159,12 +160,20 @@ fun CategorySettingScreen(navController: NavHostController) {
             ) {
                 Tab(
                     selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
+                    onClick = {
+                        selectedTab = 0
+                        draggedIndex = null
+                        dragOffset = 0f
+                    },
                     text = { Text("Chi tiêu", fontSize = (16.sp * fontScale)) }
                 )
                 Tab(
                     selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
+                    onClick = {
+                        selectedTab = 1
+                        draggedIndex = null
+                        dragOffset = 0f
+                    },
                     text = { Text("Thu nhập", fontSize = (16.sp * fontScale)) }
                 )
             }
@@ -172,85 +181,123 @@ fun CategorySettingScreen(navController: NavHostController) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .padding(horizontal = 16.dp)
             ) {
-                itemsIndexed(currentCategories, key = { index, item -> "${item.name}-$index" }) { index, category ->
+                itemsIndexed(
+                    items = currentCategories,
+                    key = { _, item -> "${item.iconName}-${item.name}" }
+                ) { index, category ->
                     val isBeingDragged = draggedIndex == index
-                    val elevation = if (isBeingDragged) 8.dp else 0.dp
+
+                    // Tính vị trí đích
+                    val targetIndex = if (isBeingDragged && dragOffset != 0f) {
+                        val itemHeight = 60f
+                        val offset = (dragOffset / itemHeight).toInt()
+                        (index + offset).coerceIn(0, currentCategories.size - 1)
+                    } else {
+                        index
+                    }
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 10.dp)
+                            .padding(vertical = 8.dp)
                             .graphicsLayer {
-                                shadowElevation = elevation.toPx()
-                                alpha = if (isBeingDragged) 0.8f else 1f
+                                shadowElevation = if (isBeingDragged) 12.dp.toPx() else 0f
+                                alpha = if (isBeingDragged) 0.9f else 1f
+                                translationY = if (isBeingDragged) dragOffset else 0f
                             }
                             .background(
-                                if (targetIndex == index) colors.surfaceVariant else Color.Transparent,
+                                when {
+                                    isBeingDragged -> colors.surfaceVariant.copy(alpha = 0.8f)
+                                    draggedIndex != null && index == targetIndex && index != draggedIndex ->
+                                        colors.primary.copy(alpha = 0.2f)
+                                    else -> Color.Transparent
+                                },
                                 RoundedCornerShape(8.dp)
                             )
-                            .padding(4.dp),
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Nút xóa
                         Box(
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(32.dp)
                                 .background(Color(0xFFEF5350), CircleShape)
                                 .clickable { deleteCategory(index) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("-", color = colors.onError, fontSize = (18.sp * fontScale))
+                            Icon(
+                                Icons.Default.Remove,
+                                contentDescription = "Delete",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
 
                         // Icon + Tên
-                        Icon(category.icon, contentDescription = category.name, tint = colors.onSurface)
+                        Icon(
+                            category.icon,
+                            contentDescription = category.name,
+                            tint = colors.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             category.name,
                             color = colors.onSurface,
-                            fontSize = (16.sp * fontScale)
+                            fontSize = (16.sp * fontScale),
+                            modifier = Modifier.weight(1f)
                         )
 
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        // Nút drag
+                        // Nút kéo (3 gạch)
                         Icon(
                             Icons.Default.Menu,
-                            contentDescription = "Reorder",
+                            contentDescription = "Kéo để sắp xếp",
                             tint = colors.outline,
-                            modifier = Modifier.pointerInput(Unit) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = { draggedIndex = index },
-                                    onDragEnd = {
-                                        if (draggedIndex != null && targetIndex != null && draggedIndex != targetIndex)
-                                            moveCategory(draggedIndex!!, targetIndex!!)
-                                        draggedIndex = null
-                                        targetIndex = null
-                                    },
-                                    onDragCancel = {
-                                        draggedIndex = null
-                                        targetIndex = null
-                                    },
-                                    onDrag = { change, dragAmount ->
-                                        change.consume()
-                                        val itemHeight = 60.dp.toPx()
-                                        val offset = (dragAmount.y / itemHeight).toInt()
-                                        val newTarget =
-                                            (index + offset).coerceIn(0, currentCategories.size - 1)
-                                        targetIndex = newTarget
-                                    }
-                                )
-                            }
+                            modifier = Modifier
+                                .size(28.dp)
+                                .pointerInput(currentCategories.size) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {
+                                            draggedIndex = index
+                                            dragOffset = 0f
+                                        },
+                                        onDragEnd = {
+                                            val from = draggedIndex
+                                            if (from != null) {
+                                                val itemHeight = 60f
+                                                val offset = (dragOffset / itemHeight).toInt()
+                                                val to = (from + offset).coerceIn(
+                                                    0,
+                                                    currentCategories.size - 1
+                                                )
+                                                if (from != to) {
+                                                    moveCategory(from, to)
+                                                }
+                                            }
+                                            draggedIndex = null
+                                            dragOffset = 0f
+                                        },
+                                        onDragCancel = {
+                                            draggedIndex = null
+                                            dragOffset = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragOffset += dragAmount.y
+                                        }
+                                    )
+                                }
                         )
                     }
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
                             if (selectedTab == 0)
@@ -260,14 +307,21 @@ fun CategorySettingScreen(navController: NavHostController) {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 16.dp)
+                            .height(48.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.primary,
                             contentColor = colors.onPrimary
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("+ Thêm danh mục", fontSize = (16.sp * fontScale))
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Thêm danh mục", fontSize = (16.sp * fontScale))
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -289,6 +343,15 @@ fun getIconFromName(iconName: String): ImageVector {
         "FitnessCenter" -> Icons.Default.FitnessCenter
         "SportsSoccer" -> Icons.Default.SportsSoccer
         "EmojiFoodBeverage" -> Icons.Default.EmojiFoodBeverage
+        "Checkroom" -> Icons.Default.Checkroom
+        "Pets" -> Icons.Default.Pets
+        "Build" -> Icons.Default.Build
+        "CardGiftcard" -> Icons.Default.CardGiftcard
+        "SportsEsports" -> Icons.Default.SportsEsports
+        "DirectionsCar" -> Icons.Default.DirectionsCar
+        "Security" -> Icons.Default.Security
+        "Home" -> Icons.Default.Home
+        "Receipt" -> Icons.Default.Receipt
 
         // Thu nhập
         "AttachMoney" -> Icons.Default.AttachMoney
@@ -300,9 +363,11 @@ fun getIconFromName(iconName: String): ImageVector {
         "MilitaryTech" -> Icons.Default.MilitaryTech
         "Favorite" -> Icons.Default.Favorite
         "AutoAwesome" -> Icons.Default.AutoAwesome
+        "Money" -> Icons.Default.Money
+        "Schedule" -> Icons.Default.Schedule
+        "MoreHoriz" -> Icons.Default.MoreHoriz
 
         // Dự phòng
         else -> Icons.Default.Category
     }
 }
-
