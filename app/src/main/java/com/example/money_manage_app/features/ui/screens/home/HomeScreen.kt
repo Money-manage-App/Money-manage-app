@@ -9,13 +9,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -23,43 +25,58 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.money_manage_app.data.local.datastore.ThemePreference
 import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val themePreference = ThemePreference(context)
+    val isDarkMode by themePreference.isDarkMode.collectAsState(initial = false)
+
+    // Định nghĩa màu sắc theo theme
+    val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
+    val topBarColor = Color(0xFFFFEB3B) // Luôn giữ màu vàng
+    val cardBackgroundColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.Black
+    val textPrimaryColor = if (isDarkMode) Color.White else Color.Black
+    val textOnCardColor = Color.White
+    val borderColor = if (isDarkMode) Color(0xFF404040) else Color.Gray
+    val expenseBoxColor = Color(0xFFFFEB3B) // Luôn giữ màu vàng
+    val incomeBoxColor = Color(0xFFF5F5F5) // Luôn giữ màu xám nhạt
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(backgroundColor)
     ) {
-        // --- Thanh vàng ---
+        // --- Thanh trên ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
-                .background(Color(0xFFFFEB3B))
+                .background(topBarColor)
                 .align(Alignment.TopCenter)
         ) {
             Text(
                 text = "Trang chủ",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.Black,
+                color = Color.Black, // Luôn giữ màu đen
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 16.dp, top = 8.dp)
             )
         }
 
-        // --- Khung đen ---
+        // --- Khung thông tin tổng quan ---
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .height(160.dp)
                 .padding(top = 40.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color.Black)
+                .background(cardBackgroundColor)
                 .padding(horizontal = 13.dp, vertical = 16.dp)
                 .fillMaxWidth(0.9f)
         ) {
@@ -68,7 +85,7 @@ fun HomeScreen(navController: NavHostController) {
                     append("Tổng số dư: ")
                     withStyle(style = SpanStyle(color = Color.Yellow)) { append("0 đ") }
                 },
-                color = Color.White,
+                color = textOnCardColor,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
@@ -80,7 +97,7 @@ fun HomeScreen(navController: NavHostController) {
                     append("Tổng số nợ: ")
                     withStyle(style = SpanStyle(color = Color.Red)) { append("0 đ") }
                 },
-                color = Color.White,
+                color = textOnCardColor,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
@@ -97,8 +114,8 @@ fun HomeScreen(navController: NavHostController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
-                    .background(Color.White)
+                    .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                    .background(if (isDarkMode) Color(0xFF2C2C2C) else Color.White)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -107,9 +124,13 @@ fun HomeScreen(navController: NavHostController) {
                     text = "Tháng 10",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.Black
+                    color = textPrimaryColor
                 )
-                Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "Chọn tháng")
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = "Chọn tháng",
+                    tint = textPrimaryColor
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -123,13 +144,23 @@ fun HomeScreen(navController: NavHostController) {
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFFFEB3B))
+                        .background(expenseBoxColor)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Chi tiêu", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(
+                        "Chi tiêu",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.Black // Text màu đen trên nền vàng
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text("0 đ", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        "0 đ",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black // Text màu đen trên nền vàng
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -138,13 +169,23 @@ fun HomeScreen(navController: NavHostController) {
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFF5F5F5))
+                        .background(incomeBoxColor)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Thu nhập", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(
+                        "Thu nhập",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.Black // Text màu đen trên nền xám nhạt
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text("0 đ", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        "0 đ",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black // Text màu đen trên nền xám nhạt
+                    )
                 }
             }
 
@@ -180,7 +221,8 @@ fun HomeScreen(navController: NavHostController) {
             ) {
                 DonutChart(
                     data = listOf(70f, 30f),
-                    colors = listOf(Color(0xFF607D8B), Color(0xFFFF9800))
+                    colors = listOf(Color(0xFF607D8B), Color(0xFFFF9800)),
+                    backgroundColor = backgroundColor
                 )
             }
         }
@@ -192,7 +234,8 @@ fun DonutChart(
     data: List<Float>,
     colors: List<Color>,
     modifier: Modifier = Modifier,
-    holeRatio: Float = 0.6f
+    holeRatio: Float = 0.6f,
+    backgroundColor: Color = Color.White
 ) {
     val total = data.sum()
     val angles = data.map { 360f * it / total }
@@ -213,9 +256,9 @@ fun DonutChart(
                 startAngle += angles[i]
             }
 
-            // Lỗ tròn ở giữa
+            // Lỗ tròn ở giữa (dùng màu nền theo theme)
             drawCircle(
-                color = Color.White,
+                color = backgroundColor,
                 radius = size.minDimension * holeRatio / 2
             )
         }
