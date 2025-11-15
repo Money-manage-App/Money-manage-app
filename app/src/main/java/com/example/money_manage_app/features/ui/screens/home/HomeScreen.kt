@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -25,15 +27,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.ThemePreference
+import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val themePreference = ThemePreference(context)
+    val themePreference = remember { ThemePreference(context) }
+    val languagePreference = remember { LanguagePreference(context) }
+
     val isDarkMode by themePreference.isDarkMode.collectAsState(initial = false)
+    val currentLanguage by languagePreference.currentLanguage.collectAsState(initial = "Tiếng Việt")
 
     // Định nghĩa màu sắc theo theme
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
@@ -59,7 +66,7 @@ fun HomeScreen(navController: NavHostController) {
                 .align(Alignment.TopCenter)
         ) {
             Text(
-                text = "Trang chủ",
+                text = stringResource(R.string.home_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = Color.Black, // Luôn giữ màu đen
@@ -82,7 +89,7 @@ fun HomeScreen(navController: NavHostController) {
         ) {
             Text(
                 text = buildAnnotatedString {
-                    append("Tổng số dư: ")
+                    append(stringResource(R.string.total_balance))
                     withStyle(style = SpanStyle(color = Color.Yellow)) { append("0 đ") }
                 },
                 color = textOnCardColor,
@@ -94,7 +101,7 @@ fun HomeScreen(navController: NavHostController) {
 
             Text(
                 text = buildAnnotatedString {
-                    append("Tổng số nợ: ")
+                    append(stringResource(R.string.total_debt))
                     withStyle(style = SpanStyle(color = Color.Red)) { append("0 đ") }
                 },
                 color = textOnCardColor,
@@ -121,7 +128,7 @@ fun HomeScreen(navController: NavHostController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Tháng 10",
+                    text = stringResource(R.string.month_10),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = textPrimaryColor
@@ -149,7 +156,7 @@ fun HomeScreen(navController: NavHostController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Chi tiêu",
+                        stringResource(R.string.expense),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = Color.Black // Text màu đen trên nền vàng
@@ -174,7 +181,7 @@ fun HomeScreen(navController: NavHostController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Thu nhập",
+                        stringResource(R.string.income),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = Color.Black // Text màu đen trên nền xám nhạt
@@ -200,13 +207,21 @@ fun HomeScreen(navController: NavHostController) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(12.dp).background(Color(0xFF607D8B)))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Thu nhập", color = Color(0xFF607D8B), fontSize = 14.sp)
+                    Text(
+                        stringResource(R.string.income),
+                        color = Color(0xFF607D8B),
+                        fontSize = 14.sp
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(12.dp).background(Color(0xFFFF9800)))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Chi tiêu", color = Color(0xFFFF9800), fontSize = 14.sp)
+                    Text(
+                        stringResource(R.string.expense),
+                        color = Color(0xFFFF9800),
+                        fontSize = 14.sp
+                    )
                 }
             }
 

@@ -28,7 +28,7 @@
     <string name="history">Lịch sử</string>
     <string name="report">Báo cáo</string>
     <string name="report_date_range">Chọn khoảng thời gian</string>
-    <string name="total_balance">Tổng số dư</string>
+    <string name="total_balance">Tổng số dư:  </string>
     <string name="expense">Chi tiêu</string>
     <string name="income">Thu nhập</string>
     <string name="average_per_day">Trung bình: %1$s đ/ngày</string>
@@ -42,4 +42,9 @@
     <string name="no_birthday">Chưa có ngày sinh</string>
 
     <string name="logout">Đăng xuất</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Trang chủ</string>
+    <string name="total_debt">Tổng số nợ:  </string>
+    <string name="month_10">Tháng</string>
 </resources>
