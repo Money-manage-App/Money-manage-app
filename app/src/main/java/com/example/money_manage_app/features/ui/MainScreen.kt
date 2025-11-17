@@ -62,7 +62,10 @@ fun MainScreen() {
                 Routes.ThemeSettings,
                 Routes.LanguageSettings,
                 Routes.FontSizeSettings,
-                Routes.AddTransaction
+                Routes.AddTransaction,
+                Routes.CategorySettings,
+                Routes.AddExpenseCategory,
+                Routes.AddIncomeCategory
             )
 
             val shouldShowBottomBar = currentRoute !in hideBottomBarRoutes
