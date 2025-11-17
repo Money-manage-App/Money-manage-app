@@ -122,7 +122,7 @@ fun SettingItem(
     Surface(
         shape = RoundedCornerShape(50),
         shadowElevation = 3.dp,
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,  // ⬅ Đổi chỗ này
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -137,19 +137,20 @@ fun SettingItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onSurface  // ⬅ icon đổi theo theme
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = title,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface, // ⬅ text đổi theo theme
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
+
             Icon(
                 imageVector = Icons.Default.KeyboardArrowRight,
                 contentDescription = "arrow",
-                tint = Color.Gray
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
     }

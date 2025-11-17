@@ -9,11 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,16 +24,16 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSettingScreen(navController: NavHostController) {
+
     val context = LocalContext.current
     val pref = remember { ThemePreference(context) }
     val scope = rememberCoroutineScope()
     val isDark by pref.isDarkMode.collectAsState(initial = false)
+
     val colors = MaterialTheme.colorScheme
 
-    // Màu sắc chọn phù hợp với cả 2 chế độ
     val selectedBorderColor = if (isDark) Color(0xFF90CAF9) else Color(0xFFFFC107)
-    val selectedCheckColor = if (isDark) Color(0xFF90CAF9) else Color(0xFFFFC107)
-    val cardColor = if (isDark) colors.surfaceVariant else colors.surface
+    val selectedCheckColor = selectedBorderColor
 
     Scaffold(
         topBar = {
@@ -64,6 +60,7 @@ fun ThemeSettingScreen(navController: NavHostController) {
             )
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -77,6 +74,7 @@ fun ThemeSettingScreen(navController: NavHostController) {
                 stringResource(R.string.light_mode) to false,
                 stringResource(R.string.dark_mode) to true
             ).forEach { (title, dark) ->
+
                 val icon = if (!dark) Icons.Default.WbSunny else Icons.Default.Brightness2
                 val isSelected = isDark == dark
 
@@ -86,25 +84,38 @@ fun ThemeSettingScreen(navController: NavHostController) {
                         .padding(vertical = 6.dp)
                         .then(
                             if (isSelected)
-                                Modifier.border(2.dp, selectedBorderColor, RoundedCornerShape(16.dp))
+                                Modifier.border(
+                                    2.dp,
+                                    selectedBorderColor,
+                                    RoundedCornerShape(16.dp)
+                                )
                             else Modifier
                         )
-                        .clickable {
-                            scope.launch { pref.setDarkMode(dark) }
-                        },
+                        .clickable { scope.launch { pref.setDarkMode(dark) } },
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardColor)
+                    colors = CardDefaults.cardColors(
+                        containerColor = colors.surface
+                    )
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(icon, null, tint = colors.primary)
+                        val globalTint = if (isDark) Color.White else Color(0xFFFFC107)
+
+                        Icon(icon, null, tint = globalTint)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(title, fontSize = 16.sp, color = colors.onSurface)
+
+                        Text(
+                            title,
+                            fontSize = 16.sp,
+                            color = colors.onSurface
+                        )
+
                         Spacer(modifier = Modifier.weight(1f))
+
                         if (isSelected) {
-                            Icon(Icons.Default.Check, null, tint = selectedCheckColor)
+                            Icon(Icons.Default.Check, null, tint = globalTint)
                         }
                     }
                 }
