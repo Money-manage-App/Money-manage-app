@@ -47,4 +47,39 @@
     <string name="home_title">Trang chủ</string>
     <string name="total_debt">Tổng số nợ:  </string>
     <string name="month_10">Tháng</string>
+
+
+    <!-- History Screen -->
+    <string name="history_title">History</string>
+    <string name="transaction_list">Transaction List</string>
+    <string name="no_transactions">No transactions found</string>
+    <string name="add_transaction">Add transaction</string>
+    <string name="select_date">Select date</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Add Transaction Screen -->
+    <string name="add_title">Add</string>
+    <string name="add">Add</string>
+    <string name="amount">Amount</string>
+    <string name="note">Note</string>
+    <string name="enter_note">Enter note…</string>
+    <string name="confirm">Confirm</string>
+    <string name="select_time">Select Time</string>
+
+    <!-- Categories - Expense -->
+    <string name="food">Food</string>
+    <string name="transport">Transport</string>
+    <string name="clothes">Clothes</string>
+    <string name="grocery">Grocery</string>
+    <string name="bills">Bills</string>
+    <string name="sports">Sports</string>
+    <string name="health">Health</string>
+    <string name="repair">Repair</string>
+    <string name="insurance">Insurance</string>
+
+    <!-- Categories - Income -->
+    <string name="salary">Salary</string>
+    <string name="savings">Savings</string>
+    <string name="interest">Interest</string>
+    <string name="other">Other</string>
 </resources>
