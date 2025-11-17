@@ -14,11 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.UserPreferences
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,10 +42,13 @@ fun UserProfileScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Thông tin cá nhân") },
+                title = { Text(stringResource(R.string.user_profile_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -70,7 +75,7 @@ fun UserProfileScreen(navController: NavHostController) {
                 if (photo.isNotEmpty()) {
                     Image(
                         painter = rememberAsyncImagePainter(photo),
-                        contentDescription = "Avatar",
+                        contentDescription = stringResource(R.string.profile),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -98,10 +103,26 @@ fun UserProfileScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .padding(24.dp)
             ) {
-                ProfileItem("Họ tên", name)
-                ProfileItem("Email", email)
-                ProfileItem("Số điện thoại", phone)
-                ProfileItem("Giới tính", gender)
+                ProfileItem(
+                    label = stringResource(R.string.full_name),
+                    value = name,
+                    noValueText = stringResource(R.string.no_name)
+                )
+                ProfileItem(
+                    label = stringResource(R.string.email),
+                    value = email,
+                    noValueText = stringResource(R.string.no_email)
+                )
+                ProfileItem(
+                    label = stringResource(R.string.phone_number),
+                    value = phone,
+                    noValueText = stringResource(R.string.no_phone)
+                )
+                ProfileItem(
+                    label = stringResource(R.string.gender),
+                    value = gender,
+                    noValueText = stringResource(R.string.no_gender)
+                )
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -116,20 +137,33 @@ fun UserProfileScreen(navController: NavHostController) {
                     contentColor = colors.onPrimary
                 )
             ) {
-                Icon(Icons.Default.Edit, contentDescription = "Chỉnh sửa")
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.edit)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Chỉnh sửa thông tin")
+                Text(stringResource(R.string.edit_profile))
             }
         }
     }
 }
 
 @Composable
-private fun ProfileItem(label: String, value: String) {
+private fun ProfileItem(label: String, value: String, noValueText: String) {
     val colors = MaterialTheme.colorScheme
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(text = label, fontWeight = FontWeight.Bold, color = colors.onBackground)
-        Text(text = if (value.isNotEmpty()) value else "Chưa có thông tin", color = colors.onBackground.copy(alpha = 0.8f))
-        Divider(color = colors.outline.copy(alpha = 0.3f), thickness = 1.dp)
+        Text(
+            text = label,
+            fontWeight = FontWeight.Bold,
+            color = colors.onBackground
+        )
+        Text(
+            text = if (value.isNotEmpty()) value else noValueText,
+            color = colors.onBackground.copy(alpha = 0.8f)
+        )
+        Divider(
+            color = colors.outline.copy(alpha = 0.3f),
+            thickness = 1.dp
+        )
     }
 }

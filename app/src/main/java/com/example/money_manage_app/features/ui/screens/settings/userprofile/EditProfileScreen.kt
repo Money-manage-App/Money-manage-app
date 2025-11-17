@@ -18,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.UserPreferences
 import kotlinx.coroutines.launch
 
@@ -49,10 +51,13 @@ fun EditProfileScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Chỉnh sửa thông tin") },
+                title = { Text(stringResource(R.string.edit_profile_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
                 actions = {
@@ -91,7 +96,7 @@ fun EditProfileScreen(navController: NavHostController) {
                 if (photo.isNotEmpty()) {
                     Image(
                         painter = rememberAsyncImagePainter(photo),
-                        contentDescription = "Avatar",
+                        contentDescription = stringResource(R.string.profile),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -117,7 +122,7 @@ fun EditProfileScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Họ tên") },
+                label = { Text(stringResource(R.string.full_name)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -125,7 +130,7 @@ fun EditProfileScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.email)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -133,7 +138,7 @@ fun EditProfileScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Số điện thoại") },
+                label = { Text(stringResource(R.string.phone_number)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -141,7 +146,7 @@ fun EditProfileScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = gender,
                 onValueChange = { gender = it },
-                label = { Text("Giới tính") },
+                label = { Text(stringResource(R.string.gender)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
         }
