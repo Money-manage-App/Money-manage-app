@@ -48,14 +48,13 @@
     <string name="total_debt">Tổng số nợ:  </string>
     <string name="month_10">Tháng</string>
 
-
     <!-- History Screen -->
-    <string name="history_title">History</string>
-    <string name="transaction_list">Transaction List</string>
-    <string name="no_transactions">No transactions found</string>
-    <string name="add_transaction">Add transaction</string>
-    <string name="select_date">Select date</string>
-    <string name="cancel">Cancel</string>
+    <string name="history_title">Lịch sử giao dịch</string>
+    <string name="select_date">Chọn ngày</string>
+    <string name="transaction_list">Danh sách giao dịch</string>
+    <string name="no_transactions">Chưa có giao dịch nào</string>
+    <string name="add_transaction">Thêm giao dịch</string>
+    <string name="cancel">Hủy</string>
 
     <!-- Add Transaction Screen -->
     <string name="add_title">Add</string>
