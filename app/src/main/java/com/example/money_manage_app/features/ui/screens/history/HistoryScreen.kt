@@ -56,14 +56,16 @@ fun HistoryScreen(navController: NavHostController) {
     val currentLanguage by languagePreference.currentLanguage.collectAsState(initial = "Tiếng Việt")
 
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
-    val headerColor = Color(0xFFFFD600)
+    val headerColor = Color(0xFFFEE912)
     val headerTextColor = Color.Black
     val textColor = if (isDarkMode) Color.White else Color.Black
     val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
     val borderColor = if (isDarkMode) Color(0xFF3E3E3E) else Color.LightGray
     val buttonColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFF4A4A4A)
-    val buttonTextColor = Color(0xFFFFD600)
+    val buttonTextColor = Color(0xFFFEE912)
 
+    val iconColor = if (isDarkMode) Color.White else Color.Black
+    val datecolor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White
     val calendar = Calendar.getInstance()
     var selectedDate by remember { mutableStateOf(calendar.timeInMillis) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -102,7 +104,7 @@ fun HistoryScreen(navController: NavHostController) {
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, borderColor),
-                color = cardColor,
+                color = datecolor,
                 shadowElevation = 2.dp,
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
@@ -119,14 +121,14 @@ fun HistoryScreen(navController: NavHostController) {
                     Text(
                         text = dateFormatter.format(Date(selectedDate)),
                         fontSize = (16.sp * fontScale),
-                        color = textColor,
+                        color = iconColor,
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
                             contentDescription = stringResource(R.string.select_date),
-                            tint = Color.Gray
+                            tint = iconColor
                         )
                     }
                 }
