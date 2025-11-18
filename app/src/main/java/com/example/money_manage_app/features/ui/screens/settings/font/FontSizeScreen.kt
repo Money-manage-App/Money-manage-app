@@ -9,9 +9,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.*
 import kotlinx.coroutines.launch
 
@@ -27,7 +29,7 @@ fun FontSizeScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Cỡ chữ", color = MaterialTheme.colorScheme.onPrimary) },
+                title = { Text(stringResource(R.string.font_size), color = MaterialTheme.colorScheme.onPrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -51,7 +53,7 @@ fun FontSizeScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Text("Điều chỉnh cỡ chữ", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.adjust_font_size), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(24.dp))
 
             Slider(
@@ -70,7 +72,7 @@ fun FontSizeScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "Văn bản mẫu hiển thị",
+                text = stringResource(R.string.preview_text),
                 fontSize = (16.sp * sliderValue),
                 color = MaterialTheme.colorScheme.onSurface
             )

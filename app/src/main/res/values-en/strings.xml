@@ -72,22 +72,8 @@
     <string name="add_category">Add Category</string>
     <string name="setting_category">Setting Category</string>
 
+    <!-- Font Size Screen-->
+    <string name="adjust_font_size">Adjust font size</string>
+    <string name="preview_text">Preview text size</string>
 
-    <!-- Categories - Expense -->
-
-    <string name="food">Food</string>
-    <string name="transport">Transport</string>
-    <string name="clothes">Clothes</string>
-    <string name="grocery">Grocery</string>
-    <string name="bills">Bills</string>
-    <string name="sports">Sports</string>
-    <string name="health">Health</string>
-    <string name="repair">Repair</string>
-    <string name="insurance">Insurance</string>
-
-    <!-- Categories - Income -->
-    <string name="salary">Salary</string>
-    <string name="savings">Savings</string>
-    <string name="interest">Interest</string>
-    <string name="other">Other</string>
 </resources>
