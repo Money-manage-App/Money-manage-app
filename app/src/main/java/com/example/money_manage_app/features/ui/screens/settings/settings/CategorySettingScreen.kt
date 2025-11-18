@@ -20,12 +20,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.money_manage_app.data.local.datastore.*
 import kotlinx.coroutines.launch
-
+import com.example.money_manage_app.R
 data class CategoryItem(val icon: ImageVector, val name: String, val iconName: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +126,7 @@ fun CategorySettingScreen(navController: NavHostController) {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Cài đặt danh mục",
+                        text = stringResource(R.string.setting_category),
                         color = colors.onPrimary,
                         fontSize = (20.sp * fontScale)
                     )
@@ -165,7 +166,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                         draggedIndex = null
                         dragOffset = 0f
                     },
-                    text = { Text("Chi tiêu", fontSize = (16.sp * fontScale)) }
+                    text = { Text(stringResource(R.string.expense), fontSize = (16.sp * fontScale)) }
                 )
                 Tab(
                     selected = selectedTab == 1,
@@ -174,7 +175,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                         draggedIndex = null
                         dragOffset = 0f
                     },
-                    text = { Text("Thu nhập", fontSize = (16.sp * fontScale)) }
+                    text = { Text(stringResource(R.string.income), fontSize = (16.sp * fontScale)) }
                 )
             }
 
@@ -321,7 +322,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Thêm danh mục", fontSize = (16.sp * fontScale))
+                        Text(stringResource(R.string.add_category), fontSize = (16.sp * fontScale))
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
