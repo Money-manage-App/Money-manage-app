@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.example.money_manage_app.R
 
 data class Category(
     val name: String,
@@ -101,9 +103,9 @@ fun AddTransactionScreen(navController: NavHostController) {
                         tint = Color.Black
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(120.dp))
                 Text(
-                    text = "Thêm",
+                    text = stringResource(R.string.add),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -126,13 +128,13 @@ fun AddTransactionScreen(navController: NavHostController) {
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 TabButton(
-                    text = "Chi tiêu",
+                    text = stringResource(R.string.expense),
                     isSelected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                     modifier = Modifier.weight(1f)
                 )
                 TabButton(
-                    text = "Thu nhập",
+                    text = stringResource(R.string.income),
                     isSelected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
                     modifier = Modifier.weight(1f)
@@ -223,7 +225,7 @@ fun TransactionInputDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Hủy", color = Color.Gray)
+                    Text(stringResource(R.string.cancel), color = Color.Gray)
                 }
             }
         ) {
@@ -246,7 +248,7 @@ fun TransactionInputDialog(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Chọn giờ") },
+            title = { Text (stringResource(R.string.select_time))},
             text = {
                 TimePicker(
                     state = timePickerState,
@@ -270,7 +272,7 @@ fun TransactionInputDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Hủy", color = Color.Gray)
+                    Text(stringResource(R.string.cancel), color = Color.Gray)
                 }
             }
         )
@@ -385,7 +387,7 @@ fun TransactionInputDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Hủy", color = Color.Gray)
+                        Text(stringResource(R.string.cancel), color = Color.Gray)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -394,7 +396,7 @@ fun TransactionInputDialog(
                             containerColor = Color(0xFFFFD600)
                         )
                     ) {
-                        Text("Xác nhận", color = Color.Black)
+                        Text(stringResource(R.string.confirm), color = Color.Black)
                     }
                 }
             }

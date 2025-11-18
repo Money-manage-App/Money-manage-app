@@ -91,7 +91,7 @@ fun HistoryScreen(navController: NavHostController) {
                     .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 40.dp)
             ) {
                 Text(
-                    text = stringResource(id = R.string.history_title),
+                    text = stringResource(R.string.history_title),
                     fontSize = (20.sp * fontScale),
                     fontWeight = FontWeight.SemiBold,
                     color = headerTextColor
@@ -125,7 +125,7 @@ fun HistoryScreen(navController: NavHostController) {
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
-                            contentDescription = stringResource(id = R.string.select_date),
+                            contentDescription = stringResource(R.string.select_date),
                             tint = Color.Gray
                         )
                     }
@@ -136,7 +136,7 @@ fun HistoryScreen(navController: NavHostController) {
 
             // Title
             Text(
-                text = stringResource(id = R.string.transaction_list),
+                text = stringResource(R.string.transaction_list),
                 fontWeight = FontWeight.Bold,
                 fontSize = (18.sp * fontScale),
                 color = textColor,
@@ -153,14 +153,14 @@ fun HistoryScreen(navController: NavHostController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_empty_state),
+                        painter = painterResource( R.drawable.ic_empty_state),
                         contentDescription = "Empty",
                         modifier = Modifier.size(120.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = stringResource(id = R.string.no_transactions),
+                        text = stringResource(R.string.no_transactions),
                         fontSize = (18.sp * fontScale),
                         fontWeight = FontWeight.Bold,
                         color = textColor,
