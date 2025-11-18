@@ -122,7 +122,7 @@ fun SettingItem(
     Surface(
         shape = RoundedCornerShape(50),
         shadowElevation = 3.dp,
-        color = MaterialTheme.colorScheme.surface,  // ⬅ Đổi chỗ này
+        color = MaterialTheme.colorScheme.surface,
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -134,23 +134,28 @@ fun SettingItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+
+                // 🔥 Icon chuyển sang màu FEE912
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    tint = MaterialTheme.colorScheme.onSurface  // ⬅ icon đổi theo theme
+                    tint = Color(0xFFFEE912)
                 )
+
                 Spacer(modifier = Modifier.width(12.dp))
+
                 Text(
                     text = title,
-                    color = MaterialTheme.colorScheme.onSurface, // ⬅ text đổi theo theme
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
 
+            // Arrow chuyển sang vàng luôn (nếu muốn)
             Icon(
                 imageVector = Icons.Default.KeyboardArrowRight,
                 contentDescription = "arrow",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                tint = Color(0xFFFEE912)
             )
         }
     }
