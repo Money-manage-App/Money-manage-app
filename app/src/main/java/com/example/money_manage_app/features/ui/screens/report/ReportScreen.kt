@@ -54,6 +54,7 @@ fun ReportScreen(navController: NavHostController) {
     // Màu sắc theo theme
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F8F8)
     val cardBackground = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+    val dateBoxColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White
     val textPrimary = if (isDarkMode) Color.White else Color.Black
     val textSecondary = if (isDarkMode) Color(0xFFAAAAAA) else Color(0xFF666666)
     val expenseBackground = if (isDarkMode) Color(0xFF4D2020) else Color(0xFFFFEBEE)
@@ -89,7 +90,7 @@ fun ReportScreen(navController: NavHostController) {
     ) {
         // ✅ Header màu vàng với title và date picker
         Surface(
-            color = Color(0xFFFDD835),
+            color = Color(0xFFFEE912),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -110,7 +111,7 @@ fun ReportScreen(navController: NavHostController) {
                 // Date picker trong header
                 Surface(
                     shape = RoundedCornerShape(30.dp),
-                    color = Color.White,
+                    color = dateBoxColor,
                     shadowElevation = 2.dp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -129,7 +130,7 @@ fun ReportScreen(navController: NavHostController) {
                             }
                         }
                 ) {
-                    Row(
+                Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxSize()
@@ -138,7 +139,7 @@ fun ReportScreen(navController: NavHostController) {
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
                             contentDescription = null,
-                            tint = Color.Black,
+                            tint = textPrimary,
                             modifier = Modifier.size(22.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
@@ -150,7 +151,7 @@ fun ReportScreen(navController: NavHostController) {
                             },
                             fontSize = (16.sp * fontScale),
                             fontWeight = FontWeight.Medium,
-                            color = Color.Black,
+                            color = textPrimary,
                             modifier = Modifier.weight(1f)
                         )
                     }
