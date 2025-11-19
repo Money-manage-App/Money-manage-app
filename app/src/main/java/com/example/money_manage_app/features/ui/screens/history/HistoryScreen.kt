@@ -56,20 +56,65 @@ fun HistoryScreen(navController: NavHostController) {
     val currentLanguage by languagePreference.currentLanguage.collectAsState(initial = "Tiếng Việt")
 
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
-    val headerColor = Color(0xFFFFD600)
+    val headerColor = Color(0xFFFEE912)
     val headerTextColor = Color.Black
     val textColor = if (isDarkMode) Color.White else Color.Black
     val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
     val borderColor = if (isDarkMode) Color(0xFF3E3E3E) else Color.LightGray
     val buttonColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFF4A4A4A)
-    val buttonTextColor = Color(0xFFFFD600)
+    val buttonTextColor = Color(0xFFFEE912)
 
+    val iconColor = if (isDarkMode) Color.White else Color.Black
+    val datecolor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White
     val calendar = Calendar.getInstance()
     var selectedDate by remember { mutableStateOf(calendar.timeInMillis) }
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
 
-    val transactions = remember { mutableStateListOf<Transaction>() }
+    val transactions = remember {
+        mutableStateListOf(
+            Transaction(
+                id = 1,
+                title = "Bún bò",
+                category = "Ăn uống",
+                amount = 30000.0,
+                isIncome = false,
+                time = "15:30",
+                icon = Icons.Default.CalendarToday, // icon tạm
+                categoryColor = Color(0xFF4CAF50)
+            ),
+            Transaction(
+                id = 2,
+                title = "Quần áo",
+                category = "Mua sắm",
+                amount = 500000.0,
+                isIncome = false,
+                time = "00:00",
+                icon = Icons.Default.CalendarToday,
+                categoryColor = Color(0xFF3F51B5)
+            ),
+            Transaction(
+                id = 3,
+                title = "Trà sữa",
+                category = "Ăn uống",
+                amount = 40000.0,
+                isIncome = false,
+                time = "15:30",
+                icon = Icons.Default.CalendarToday,
+                categoryColor = Color(0xFF4CAF50)
+            ),
+            Transaction(
+                id = 4,
+                title = "Lương",
+                category = "Lương",
+                amount = 10000000.0,
+                isIncome = true,
+                time = "11:30",
+                icon = Icons.Default.CalendarToday,
+                categoryColor = Color(0xFFFFC107)
+            )
+        )
+    }
 
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
 
@@ -102,7 +147,7 @@ fun HistoryScreen(navController: NavHostController) {
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, borderColor),
-                color = cardColor,
+                color = datecolor,
                 shadowElevation = 2.dp,
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
@@ -119,14 +164,14 @@ fun HistoryScreen(navController: NavHostController) {
                     Text(
                         text = dateFormatter.format(Date(selectedDate)),
                         fontSize = (16.sp * fontScale),
-                        color = textColor,
+                        color = iconColor,
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
                             contentDescription = stringResource(R.string.select_date),
-                            tint = Color.Gray
+                            tint = iconColor
                         )
                     }
                 }
