@@ -8,10 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,9 +27,12 @@ import androidx.navigation.NavHostController
 import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.data.local.datastore.LanguagePreference
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.math.cos
 import kotlin.math.sin
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
@@ -41,6 +41,13 @@ fun HomeScreen(navController: NavHostController) {
 
     val isDarkMode by themePreference.isDarkMode.collectAsState(initial = false)
     val currentLanguage by languagePreference.currentLanguage.collectAsState(initial = "Tiếng Việt")
+
+    // State cho DatePicker
+    val calendar = Calendar.getInstance()
+    var selectedDate by remember { mutableStateOf(calendar.timeInMillis) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
 
     // Định nghĩa màu sắc theo theme
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
@@ -128,16 +135,18 @@ fun HomeScreen(navController: NavHostController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.month_10),
+                    text = dateFormatter.format(Date(selectedDate)),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = textPrimaryColor
                 )
-                Icon(
-                    imageVector = Icons.Default.CalendarToday,
-                    contentDescription = "Chọn tháng",
-                    tint = textPrimaryColor
-                )
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = "Chọn tháng",
+                        tint = textPrimaryColor
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -238,6 +247,49 @@ fun HomeScreen(navController: NavHostController) {
                     data = listOf(70f, 30f),
                     colors = listOf(Color(0xFF607D8B), Color(0xFFFF9800)),
                     backgroundColor = backgroundColor
+                )
+            }
+        }
+
+        // Date Picker Dialog
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { selectedDate = it }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("OK", color = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text(
+                            text = if (currentLanguage == "English") "Cancel" else "Hủy",
+                            color = if (isDarkMode) Color.White else Color.Gray
+                        )
+                    }
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+                )
+            ) {
+                DatePicker(
+                    state = datePickerState,
+                    colors = DatePickerDefaults.colors(
+                        containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White,
+                        selectedDayContainerColor = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E),
+                        todayContentColor = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E),
+                        todayDateBorderColor = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E),
+                        dayContentColor = textPrimaryColor,
+                        weekdayContentColor = textPrimaryColor,
+                        currentYearContentColor = textPrimaryColor,
+                        selectedYearContentColor = Color.White,
+                        yearContentColor = textPrimaryColor
+                    )
                 )
             }
         }
