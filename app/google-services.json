@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "670135857127-qqa576kgjjug849r4b3853sp1bp239v1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.money_manage_app",
+            "certificate_hash": "bc6e444d8a75303d65a1995d952a3dc9f5dbcda7"
+          }
+        },
+        {
           "client_id": "670135857127-ssafbjhn4m00r33cfoucfpp4n43r1fsr.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
