@@ -32,6 +32,9 @@ import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.draw.clip
+
 
 
 data class Transaction(
@@ -428,16 +431,14 @@ fun TransactionDetailView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionDetailScreen(
     navController: NavHostController,
     transactionId: Int
 ) {
     val transactions = listOf(
-        Transaction(1, "Bún bò", "Ăn uống", 30000.0, false, "15:30", Icons.Default.CalendarToday, Color(0xFF4CAF50)),
-        Transaction(2, "Quần áo", "Mua sắm", 500000.0, false, "00:00", Icons.Default.CalendarToday, Color(0xFF3F51B5)),
-        Transaction(3, "Trà sữa", "Ăn uống", 40000.0, false, "15:30", Icons.Default.CalendarToday, Color(0xFF4CAF50)),
-        Transaction(4, "Lương", "Lương", 10000000.0, true, "11:30", Icons.Default.CalendarToday, Color(0xFFFFC107))
+        Transaction(1, "Bún bò", "Mua sắm", 25000.0, false, "19 thg 11, 2025", Icons.Filled.ShoppingCart, Color(0xFFFF9800)),
     )
 
     val transaction = transactions.firstOrNull { it.id == transactionId }
@@ -447,10 +448,106 @@ fun TransactionDetailScreen(
         return
     }
 
-    TransactionDetailView(
-        transaction = transaction,
-        onBack = { navController.popBackStack() },
-        onEdit = { /* TODO */ },
-        onDelete = { /* TODO */ }
-    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Chi tiết", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFFFEB3B) // vàng app hiện tại
+                )
+            )
+        },
+        bottomBar = {
+            BottomAppBar(
+                containerColor = Color.White,
+                tonalElevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    TextButton(onClick = { /* TODO sửa */ }) {
+                        Text("Sửa", fontSize = 18.sp)
+                    }
+                    Text("|", color = Color.Gray, fontSize = 18.sp)
+                    TextButton(onClick = { /* TODO xóa */ }) {
+                        Text("Xóa", fontSize = 18.sp, color = Color.Red)
+                    }
+                }
+            }
+        }
+    ) { padding ->
+
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(20.dp)
+                .fillMaxSize()
+        ) {
+
+            // --- Icon và tiêu đề ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFF8E1)), // vàng rất nhạt
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(Modifier.width(16.dp))
+
+                Text(
+                    text = transaction.category,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            // ---- Các dòng thông tin ----
+            DetailRow(label = "Kiểu", value = if (transaction.isIncome) "Thu nhập" else "Chi tiêu")
+            DetailRow(label = "Số tiền", value = "%,d".format(transaction.amount.toInt()))
+            DetailRow(label = "Ngày", value = transaction.time)
+            DetailRow(label = "Ghi chú", value = transaction.title)
+        }
+    }
 }
+
+@Composable
+fun DetailRow(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 10.dp)) {
+
+        Text(
+            text = label,
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = value,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+
