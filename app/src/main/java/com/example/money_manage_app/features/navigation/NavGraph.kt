@@ -22,6 +22,9 @@ import com.example.money_manage_app.features.ui.screens.settings.settings.AddExp
 import com.example.money_manage_app.features.ui.screens.settings.settings.AddIncomeCategoryScreen
 import com.example.money_manage_app.features.ui.screens.settings.settings.CurrencySettingScreen
 
+// Import màn hình chi tiết giao dịch
+import com.example.money_manage_app.features.ui.screens.history.TransactionDetailScreen
+
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -58,6 +61,12 @@ fun NavGraph(
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
 
         composable(Routes.AddTransaction) { AddTransactionScreen(navController) }
+
+        // ✅ Route xem chi tiết giao dịch
+        composable("${Routes.TransactionDetail}/{id}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")?.toIntOrNull() ?: -1
+            TransactionDetailScreen(navController = navController, transactionId = id)
+        }
     }
 }
 
@@ -79,4 +88,7 @@ object Routes {
     const val AddExpenseCategory = "add_expense_category"
     const val AddIncomeCategory = "add_income_category"
     const val CurrencySettings = "currency_settings"
+
+    // ➕ Route mới
+    const val TransactionDetail = "detail"
 }

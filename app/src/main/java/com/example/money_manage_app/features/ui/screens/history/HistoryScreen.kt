@@ -4,11 +4,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +31,7 @@ import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.foundation.shape.CircleShape
 
 
 data class Transaction(
@@ -80,7 +83,7 @@ fun HistoryScreen(navController: NavHostController) {
                 amount = 30000.0,
                 isIncome = false,
                 time = "15:30",
-                icon = Icons.Default.CalendarToday, // icon tạm
+                icon = Icons.Default.CalendarToday,
                 categoryColor = Color(0xFF4CAF50)
             ),
             Transaction(
@@ -143,7 +146,7 @@ fun HistoryScreen(navController: NavHostController) {
                 )
             }
 
-            // Date Picker Field
+            // Date Picker
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, borderColor),
@@ -179,7 +182,6 @@ fun HistoryScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(-12.dp))
 
-            // Title
             Text(
                 text = stringResource(R.string.transaction_list),
                 fontWeight = FontWeight.Bold,
@@ -188,7 +190,7 @@ fun HistoryScreen(navController: NavHostController) {
                 modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp)
             )
 
-            // Empty state
+            // If empty
             if (transactions.isEmpty()) {
                 Column(
                     modifier = Modifier
@@ -198,7 +200,7 @@ fun HistoryScreen(navController: NavHostController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource( R.drawable.ic_empty_state),
+                        painter = painterResource(R.drawable.ic_empty_state),
                         contentDescription = "Empty",
                         modifier = Modifier.size(120.dp)
                     )
@@ -243,7 +245,10 @@ fun HistoryScreen(navController: NavHostController) {
                         TransactionItem(
                             transaction = transaction,
                             fontScale = fontScale,
-                            isDarkMode = isDarkMode
+                            isDarkMode = isDarkMode,
+                            onClick = {
+                                navController.navigate("detail/${transaction.id}")
+                            }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -251,7 +256,6 @@ fun HistoryScreen(navController: NavHostController) {
             }
         }
 
-        // Date Picker Dialog
         if (showDatePicker) {
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -285,15 +289,22 @@ fun HistoryScreen(navController: NavHostController) {
     }
 }
 
+// ITEM CLICKABLE
 @Composable
-fun TransactionItem(transaction: Transaction, fontScale: Float = 1f, isDarkMode: Boolean = false) {
+fun TransactionItem(
+    transaction: Transaction,
+    fontScale: Float = 1f,
+    isDarkMode: Boolean = false,
+    onClick: () -> Unit
+) {
     val textColor = if (isDarkMode) Color.White else Color.Black
     val iconBgColor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -361,4 +372,85 @@ fun TransactionItem(transaction: Transaction, fontScale: Float = 1f, isDarkMode:
             )
         }
     }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TransactionDetailView(
+    transaction: Transaction,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Chi tiết giao dịch") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+
+            Text("Tên: ${transaction.title}", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(8.dp))
+
+            Text("Danh mục: ${transaction.category}")
+            Text("Số tiền: ${transaction.amount}")
+            Text("Thu nhập?: ${transaction.isIncome}")
+            Text("Thời gian: ${transaction.time}")
+
+            Spacer(Modifier.height(24.dp))
+
+            Row {
+                Button(onClick = onEdit) {
+                    Text("Sửa")
+                }
+                Spacer(Modifier.width(16.dp))
+                OutlinedButton(onClick = onDelete) {
+                    Text("Xóa")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TransactionDetailScreen(
+    navController: NavHostController,
+    transactionId: Int
+) {
+    val transactions = listOf(
+        Transaction(1, "Bún bò", "Ăn uống", 30000.0, false, "15:30", Icons.Default.CalendarToday, Color(0xFF4CAF50)),
+        Transaction(2, "Quần áo", "Mua sắm", 500000.0, false, "00:00", Icons.Default.CalendarToday, Color(0xFF3F51B5)),
+        Transaction(3, "Trà sữa", "Ăn uống", 40000.0, false, "15:30", Icons.Default.CalendarToday, Color(0xFF4CAF50)),
+        Transaction(4, "Lương", "Lương", 10000000.0, true, "11:30", Icons.Default.CalendarToday, Color(0xFFFFC107))
+    )
+
+    val transaction = transactions.firstOrNull { it.id == transactionId }
+
+    if (transaction == null) {
+        Text("Không tìm thấy giao dịch!", color = Color.Red)
+        return
+    }
+
+    TransactionDetailView(
+        transaction = transaction,
+        onBack = { navController.popBackStack() },
+        onEdit = { /* TODO */ },
+        onDelete = { /* TODO */ }
+    )
 }
