@@ -1,4 +1,4 @@
-package com.example.demo-repository
+package com.example.money_manage_app
 
 import org.junit.Test
 
