@@ -48,6 +48,63 @@ data class Transaction(
     val categoryColor: Color
 )
 
+// Singleton để lưu trữ danh sách giao dịch
+object TransactionRepository {
+    val transactions = mutableStateListOf(
+        Transaction(
+            id = 1,
+            title = "Bún bò",
+            category = "Ăn uống",
+            amount = 30000.0,
+            isIncome = false,
+            time = "15:30",
+            icon = Icons.Default.CalendarToday,
+            categoryColor = Color(0xFF4CAF50)
+        ),
+        Transaction(
+            id = 2,
+            title = "Quần áo",
+            category = "Mua sắm",
+            amount = 500000.0,
+            isIncome = false,
+            time = "00:00",
+            icon = Icons.Default.ShoppingCart,
+            categoryColor = Color(0xFF3F51B5)
+        ),
+        Transaction(
+            id = 3,
+            title = "Trà sữa",
+            category = "Ăn uống",
+            amount = 40000.0,
+            isIncome = false,
+            time = "15:30",
+            icon = Icons.Default.CalendarToday,
+            categoryColor = Color(0xFF4CAF50)
+        ),
+        Transaction(
+            id = 4,
+            title = "Lương",
+            category = "Lương",
+            amount = 10000000.0,
+            isIncome = true,
+            time = "11:30",
+            icon = Icons.Default.CalendarToday,
+            categoryColor = Color(0xFFFFC107)
+        )
+    )
+
+    fun deleteTransaction(id: Int) {
+        transactions.removeAll { it.id == id }
+    }
+
+    fun updateTransaction(updatedTransaction: Transaction) {
+        val index = transactions.indexOfFirst { it.id == updatedTransaction.id }
+        if (index != -1) {
+            transactions[index] = updatedTransaction
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(navController: NavHostController) {
@@ -77,50 +134,7 @@ fun HistoryScreen(navController: NavHostController) {
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
 
-    val transactions = remember {
-        mutableStateListOf(
-            Transaction(
-                id = 1,
-                title = "Bún bò",
-                category = "Ăn uống",
-                amount = 30000.0,
-                isIncome = false,
-                time = "15:30",
-                icon = Icons.Default.CalendarToday,
-                categoryColor = Color(0xFF4CAF50)
-            ),
-            Transaction(
-                id = 2,
-                title = "Quần áo",
-                category = "Mua sắm",
-                amount = 500000.0,
-                isIncome = false,
-                time = "00:00",
-                icon = Icons.Default.CalendarToday,
-                categoryColor = Color(0xFF3F51B5)
-            ),
-            Transaction(
-                id = 3,
-                title = "Trà sữa",
-                category = "Ăn uống",
-                amount = 40000.0,
-                isIncome = false,
-                time = "15:30",
-                icon = Icons.Default.CalendarToday,
-                categoryColor = Color(0xFF4CAF50)
-            ),
-            Transaction(
-                id = 4,
-                title = "Lương",
-                category = "Lương",
-                amount = 10000000.0,
-                isIncome = true,
-                time = "11:30",
-                icon = Icons.Default.CalendarToday,
-                categoryColor = Color(0xFFFFC107)
-            )
-        )
-    }
+    val transactions = TransactionRepository.transactions
 
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
 
@@ -376,60 +390,6 @@ fun TransactionItem(
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TransactionDetailView(
-    transaction: Transaction,
-    onBack: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Chi tiết giao dịch") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-
-            Text("Tên: ${transaction.title}", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-
-            Text("Danh mục: ${transaction.category}")
-            Text("Số tiền: ${transaction.amount}")
-            Text("Thu nhập?: ${transaction.isIncome}")
-            Text("Thời gian: ${transaction.time}")
-
-            Spacer(Modifier.height(24.dp))
-
-            Row {
-                Button(onClick = onEdit) {
-                    Text("Sửa")
-                }
-                Spacer(Modifier.width(16.dp))
-                OutlinedButton(onClick = onDelete) {
-                    Text("Xóa")
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -437,15 +397,57 @@ fun TransactionDetailScreen(
     navController: NavHostController,
     transactionId: Int
 ) {
-    val transactions = listOf(
-        Transaction(1, "Bún bò", "Mua sắm", 25000.0, false, "19 thg 11, 2025", Icons.Filled.ShoppingCart, Color(0xFFFF9800)),
-    )
+    val context = LocalContext.current
+    val transaction = TransactionRepository.transactions.firstOrNull { it.id == transactionId }
 
-    val transaction = transactions.firstOrNull { it.id == transactionId }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
     if (transaction == null) {
-        Text("Không tìm thấy giao dịch!", color = Color.Red)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Không tìm thấy giao dịch!", color = Color.Red)
+        }
         return
+    }
+
+    // Dialog xác nhận xóa
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Xác nhận xóa") },
+            text = { Text("Bạn có chắc chắn muốn xóa giao dịch này?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        TransactionRepository.deleteTransaction(transactionId)
+                        showDeleteDialog = false
+                        navController.popBackStack()
+                    }
+                ) {
+                    Text("Xóa", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
+
+    // Dialog sửa giao dịch
+    if (showEditDialog) {
+        EditTransactionDialog(
+            transaction = transaction,
+            onDismiss = { showEditDialog = false },
+            onSave = { updatedTransaction ->
+                TransactionRepository.updateTransaction(updatedTransaction)
+                showEditDialog = false
+            }
+        )
     }
 
     Scaffold(
@@ -458,7 +460,7 @@ fun TransactionDetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFFFEB3B) // vàng app hiện tại
+                    containerColor = Color(0xFFFFEB3B)
                 )
             )
         },
@@ -473,11 +475,11 @@ fun TransactionDetailScreen(
                         .padding(horizontal = 32.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    TextButton(onClick = { /* TODO sửa */ }) {
-                        Text("Sửa", fontSize = 18.sp)
+                    TextButton(onClick = { showEditDialog = true }) {
+                        Text("Sửa", fontSize = 18.sp, color = Color(0xFF2196F3))
                     }
                     Text("|", color = Color.Gray, fontSize = 18.sp)
-                    TextButton(onClick = { /* TODO xóa */ }) {
+                    TextButton(onClick = { showDeleteDialog = true }) {
                         Text("Xóa", fontSize = 18.sp, color = Color.Red)
                     }
                 }
@@ -499,13 +501,13 @@ fun TransactionDetailScreen(
                     modifier = Modifier
                         .size(50.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFFF8E1)), // vàng rất nhạt
+                        .background(Color(0xFFFFF8E1)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ShoppingCart,
+                        imageVector = transaction.icon,
                         contentDescription = null,
-                        tint = Color(0xFFFF9800),
+                        tint = transaction.categoryColor,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -523,8 +525,8 @@ fun TransactionDetailScreen(
 
             // ---- Các dòng thông tin ----
             DetailRow(label = "Kiểu", value = if (transaction.isIncome) "Thu nhập" else "Chi tiêu")
-            DetailRow(label = "Số tiền", value = "%,d".format(transaction.amount.toInt()))
-            DetailRow(label = "Ngày", value = transaction.time)
+            DetailRow(label = "Số tiền", value = "%,d đ".format(transaction.amount.toInt()))
+            DetailRow(label = "Thời gian", value = transaction.time)
             DetailRow(label = "Ghi chú", value = transaction.title)
         }
     }
@@ -550,4 +552,77 @@ fun DetailRow(label: String, value: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditTransactionDialog(
+    transaction: Transaction,
+    onDismiss: () -> Unit,
+    onSave: (Transaction) -> Unit
+) {
+    var title by remember { mutableStateOf(transaction.title) }
+    var amount by remember { mutableStateOf(transaction.amount.toString()) }
+    var category by remember { mutableStateOf(transaction.category) }
+    var time by remember { mutableStateOf(transaction.time) }
 
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sửa giao dịch") },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Ghi chú") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text("Số tiền") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { category = it },
+                    label = { Text("Danh mục") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = { time = it },
+                    label = { Text("Thời gian") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val updatedTransaction = transaction.copy(
+                        title = title,
+                        amount = amount.toDoubleOrNull() ?: transaction.amount,
+                        category = category,
+                        time = time
+                    )
+                    onSave(updatedTransaction)
+                }
+            ) {
+                Text("Lưu", color = Color(0xFF2196F3))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Hủy")
+            }
+        }
+    )
+}
