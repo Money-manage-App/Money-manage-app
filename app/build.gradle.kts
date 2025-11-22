@@ -22,7 +22,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("keystore/my-release-key.jks")  // file keystore bạn đặt trong thư mục app
+            storeFile = file("${projectDir}/keystore/my-release-key.jks")  // file keystore bạn đặt trong thư mục app
             storePassword = "123456"               // mật khẩu store bạn tạo
             keyAlias = "mma"                     // alias bạn tạo khi build keystore
             keyPassword = "123456"                 // mật khẩu alias
