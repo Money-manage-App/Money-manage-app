@@ -330,8 +330,8 @@ fun DonutChart(
             )
         }
 
-        // Hiển thị phần trăm bên ngoài biểu đồ
-        val radius = 90f
+        // Hiển thị phần trăm bên cạnh từng phần của biểu đồ (xa hơn để không bị che)
+        val radius = 130f // Tăng bán kính để text ra xa biểu đồ
         var startAngle = -90f
         for (i in data.indices) {
             val midAngle = startAngle + angles[i] / 2
@@ -341,7 +341,7 @@ fun DonutChart(
             Text(
                 text = "${(data[i] / total * 100).toInt()}%",
                 color = colors.getOrElse(i) { Color.Gray },
-                fontSize = 12.sp,
+                fontSize = 18.sp, // Tăng kích thước chữ
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.offset(x.dp, y.dp)
             )
