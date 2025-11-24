@@ -3,7 +3,6 @@ package com.example.money_manage_app.features.ui.screens.settings.font
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,6 +18,7 @@ import androidx.navigation.NavHostController
 import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.*
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,10 +28,8 @@ fun FontSizeScreen(navController: NavHostController) {
     val fontSizeManager = remember { FontSizeManager(context) }
     val scope = rememberCoroutineScope()
 
-    // Lấy scale hiện tại từ DataStore
     val fontScale by fontSizeManager.fontSizeFlow.collectAsState(initial = 1f)
 
-    // Danh sách các mức font
     val fontOptions = listOf(
         0.9f to "A",
         1.0f to "A",
@@ -39,17 +37,19 @@ fun FontSizeScreen(navController: NavHostController) {
         1.4f to "A"
     )
 
+    var sliderValue by rememberSaveable { mutableStateOf(fontScale) }
+
+    LaunchedEffect(fontScale) {
+        sliderValue = fontScale
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.font_size), color = MaterialTheme.colorScheme.onPrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -74,17 +74,35 @@ fun FontSizeScreen(navController: NavHostController) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // 4 nút chọn cỡ chữ
+            /** ---------------- SLIDER MỎNG ---------------- **/
+            Slider(
+                value = sliderValue,
+                onValueChange = { sliderValue = it },
+                onValueChangeFinished = {
+                    val nearest = fontOptions.minByOrNull { (scale, _) ->
+                        abs(scale - sliderValue)
+                    }?.first ?: sliderValue
+
+                    scope.launch { fontSizeManager.setFontSize(nearest) }
+                },
+                valueRange = 0.9f..1.4f,
+                steps = 2,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)   // 👉 thanh mỏng lại
+                    .padding(horizontal = 10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            /** ---------- NÚT A căn thẳng 4 mốc slider ---------- **/
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier.fillMaxWidth()
             ) {
-
                 fontOptions.forEach { (scale, label) ->
 
-                    // Tăng size chữ theo scale để nhìn khác nhau
                     val previewSize = when (scale) {
                         0.9f -> 14.sp
                         1.0f -> 18.sp
@@ -92,31 +110,35 @@ fun FontSizeScreen(navController: NavHostController) {
                         else -> 26.sp
                     }
 
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            scope.launch { fontSizeManager.setFontSize(scale) }
-                        }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)       // 👉 chia đều giống slider steps
+                            .wrapContentSize(Alignment.Center)
+                            .clickable {
+                                scope.launch { fontSizeManager.setFontSize(scale) }
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                        Text(
-                            text = label,
-                            fontSize = previewSize,
-                            color = if (fontScale == scale)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurface
-                        )
-
-                        // Gạch dưới để đánh dấu đang chọn
-                        if (fontScale == scale) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Box(
-                                modifier = Modifier
-                                    .height(3.dp)
-                                    .width(24.dp)
-                                    .background(MaterialTheme.colorScheme.primary)
+                            Text(
+                                text = label,
+                                fontSize = previewSize,
+                                color = if (fontScale == scale)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurface
                             )
+
+                            if (fontScale == scale) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .height(3.dp)
+                                        .width(24.dp)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                )
+                            }
                         }
                     }
                 }

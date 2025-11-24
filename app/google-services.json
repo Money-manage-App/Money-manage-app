@@ -14,19 +14,27 @@
       },
       "oauth_client": [
         {
-          "client_id": "670135857127-grv5vp1u7o1k0pnl7omrr9adid63bv5b.apps.googleusercontent.com",
+          "client_id": "670135857127-dhu0hujeaumq7dl45iijh7dt5mf1e4p8.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.money_manage_app",
-            "certificate_hash": "caa1c1c5fcbb79bb7e8bf959fe3d10c2d9c537d7"
+            "certificate_hash": "f7f4d9cce737c0164adcbf765e6978e6acdce269"
           }
         },
         {
-          "client_id": "670135857127-koh70mn30m837h0f668lupo0bqj98in6.apps.googleusercontent.com",
+          "client_id": "670135857127-qqa576kgjjug849r4b3853sp1bp239v1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.money_manage_app",
-            "certificate_hash": "21d2d225f7f51bcef6d4402eac85fd3be6c10d0a"
+            "certificate_hash": "bc6e444d8a75303d65a1995d952a3dc9f5dbcda7"
+          }
+        },
+        {
+          "client_id": "670135857127-ssafbjhn4m00r33cfoucfpp4n43r1fsr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.money_manage_app",
+            "certificate_hash": "a9faa60aa84b04b7ed122e415882e3792cb1f294"
           }
         },
         {
