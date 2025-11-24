@@ -60,6 +60,7 @@
 
     <!-- Add Screen -->
     <string name="note_transaction">Note Transaction</string>
+    <string name="hello">Hello, ...!</string>
 
     <!-- Add Transaction Screen -->
     <string name="add">Add</string>

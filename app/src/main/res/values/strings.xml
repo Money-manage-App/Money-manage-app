@@ -59,6 +59,7 @@
 
     <!-- Add Screen -->
     <string name="note_transaction">Ghi chú giao dịch</string>
+    <string name="hello">Xin chào, ...!</string>
 
     <!-- Add Transaction Screen -->
     <string name="add">Thêm</string>
