@@ -1,17 +1,22 @@
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
+package com.example.money_manage_app.data.local.database.dao
+
+import androidx.room.*
+import com.example.money_manage_app.data.local.entity.User
 import kotlinx.coroutines.flow.Flow
-import androidx.room.OnConflictStrategy
 
 @Dao
 interface UserDao {
-    @Query("SELECT * FROM users LIMIT 1")
-    fun getUser(): Flow<User?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(user: User)
+    suspend fun insertUser(user: User)
 
-    @Query("UPDATE users SET balance = :newBalance WHERE id = :id")
-    suspend fun updateBalance(id: Int, newBalance: Double)
+    @Query("SELECT * FROM User WHERE userId = :userId")
+    fun getUser(userId: String): Flow<User?>
+
+    @Query("DELETE FROM User WHERE userId = :userId")
+    suspend fun deleteUser(userId: String)
+
+    @Update
+    suspend fun updateUser(user: User)
+
 }

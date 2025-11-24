@@ -1,13 +1,13 @@
 package com.example.money_manage_app.features.ui.screens.settings.settings
 
-import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,8 +18,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.money_manage_app.MyApp
 import com.example.money_manage_app.R
 import com.example.money_manage_app.features.navigation.Routes
+import com.example.money_manage_app.features.viewmodel.UserViewModel
+import com.example.money_manage_app.features.viewmodel.UserViewModelFactory
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -32,7 +35,11 @@ fun SettingsScreen(navController: NavHostController) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val auth = FirebaseAuth.getInstance()
-    val currentUser = auth.currentUser
+    val currentUserId = auth.currentUser?.uid ?: "guest"
+
+    // Tạo UserViewModel
+    val userRepository = com.example.money_manage_app.data.repository.UserRepository(MyApp.db.userDao())
+    val userViewModel = UserViewModelFactory(userRepository).create(UserViewModel::class.java)
 
     // Google sign-in client
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -40,7 +47,8 @@ fun SettingsScreen(navController: NavHostController) {
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
-    val activity = context as? Activity
+
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -77,7 +85,10 @@ fun SettingsScreen(navController: NavHostController) {
             SettingItem(
                 icon = Icons.Default.AccountCircle,
                 title = stringResource(R.string.profile),
-                onClick = { navController.navigate(Routes.UserProfile) }
+                onClick = {
+                    // Chỉ navigate sang UserProfileScreen với userId
+                    navController.navigate("${Routes.UserProfile}/$currentUserId")
+                }
             )
 
             SettingItem(
@@ -134,24 +145,18 @@ fun SettingItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
-                // 🔥 Icon chuyển sang màu FEE912
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
                     tint = Color(0xFFFEE912)
                 )
-
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Text(
                     text = title,
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-
-            // Arrow chuyển sang vàng luôn (nếu muốn)
             Icon(
                 imageVector = Icons.Default.KeyboardArrowRight,
                 contentDescription = "arrow",

@@ -4,11 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,9 +27,7 @@ data class BottomNavItem(
 
 @Composable
 fun MainScreen() {
-
     val navController = rememberNavController()
-
     val items = listOf(
         BottomNavItem(Routes.Home, R.string.home, Icons.Default.Home),
         BottomNavItem(Routes.History, R.string.history, Icons.Default.History),
@@ -48,13 +42,12 @@ fun MainScreen() {
     Scaffold(
         containerColor = colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
 
             // ✅ Những màn hình sẽ ẩn BottomNav
-            val hideBottomBarRoutes = listOf(
+            val hideBottomBarRoutesPrefixes = listOf(
                 Routes.Add,
                 Routes.Settings,
                 Routes.UserProfile,
@@ -68,21 +61,20 @@ fun MainScreen() {
                 Routes.AddIncomeCategory
             )
 
-            val shouldShowBottomBar = currentRoute !in hideBottomBarRoutes
+            val shouldShowBottomBar = hideBottomBarRoutesPrefixes.none { prefix ->
+                currentRoute?.startsWith(prefix) == true
+            }
 
             if (shouldShowBottomBar) {
                 NavigationBar(
                     containerColor = colors.surface,
                     tonalElevation = 0.dp
                 ) {
-
-                    val navEntry by navController.currentBackStackEntryAsState()
-                    val route = navEntry?.destination?.route
+                    val route = currentRoute
 
                     // --- LEFT ITEMS: Home + History ---
                     items.take(2).forEach { item ->
                         val selected = route == item.route
-
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
@@ -128,7 +120,6 @@ fun MainScreen() {
                     // --- RIGHT ITEMS: Report + Profile ---
                     items.takeLast(2).forEach { item ->
                         val selected = route == item.route
-
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
