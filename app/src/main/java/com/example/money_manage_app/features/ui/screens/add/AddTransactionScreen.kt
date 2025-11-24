@@ -202,6 +202,8 @@ fun TransactionInputDialog(
         }
     }
 
+    // Thay thế phần DatePickerDialog trong TransactionInputDialog
+
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = selectedCalendar.timeInMillis
@@ -220,21 +222,36 @@ fun TransactionInputDialog(
                     showDatePicker = false
                     showTimePicker = true
                 }) {
-                    Text("OK", color = Color(0xFFFFD600))
+                    Text("OK", color = Color.Black)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel), color = Color.Gray)
+                    Text(stringResource(R.string.cancel), color = Color.Black)
                 }
-            }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = Color.White  // Nền dialog màu trắng
+            )
         ) {
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = Color(0xFFFFD600),
-                    todayContentColor = Color(0xFFFFD600),
-                    todayDateBorderColor = Color(0xFFFFD600)
+                    containerColor = Color.White,  // Nền lịch màu trắng
+                    titleContentColor = Color.Black,  // Màu chữ "Chọn ngày" màu đen
+                    headlineContentColor = Color.Black,  // Màu chữ tiêu đề ngày được chọn
+                    selectedDayContainerColor = Color(0xFFFEE912),  // Ngày được chọn màu vàng FEE912
+                    selectedDayContentColor = Color.Black,  // Màu chữ của ngày được chọn
+                    todayContentColor = Color.Black,  // Màu chữ ngày hôm nay
+                    todayDateBorderColor = Color.Transparent,  // Không có viền ngày hôm nay
+                    dayContentColor = Color.Black,  // Màu chữ các ngày thường
+                    weekdayContentColor = Color.Black,  // Màu chữ thứ trong tuần
+                    yearContentColor = Color.Black,  // Màu chữ năm
+                    currentYearContentColor = Color.Black,  // Màu chữ năm hiện tại
+                    selectedYearContainerColor = Color(0xFFFEE912),  // Nền năm được chọn
+                    selectedYearContentColor = Color.Black,  // Màu chữ năm được chọn
+                    navigationContentColor = Color.Black,  // Màu mũi tên điều hướng
+                    dividerColor = Color.Transparent  // Ẩn đường phân cách
                 )
             )
         }

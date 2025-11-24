@@ -40,8 +40,6 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.ui.draw.clip
 
-
-
 data class Transaction(
     val id: Int,
     val title: String,
@@ -52,8 +50,6 @@ data class Transaction(
     val icon: ImageVector,
     val categoryColor: Color
 )
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,9 +72,14 @@ fun HistoryScreen(navController: NavHostController) {
     val borderColor = if (isDarkMode) Color(0xFF3E3E3E) else Color.LightGray
     val buttonColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFF4A4A4A)
     val buttonTextColor = Color(0xFFFEE912)
-
     val iconColor = if (isDarkMode) Color.White else Color.Black
     val datecolor = if (isDarkMode) Color(0xFF2C2C2C) else Color.White
+
+    // Màu cho DatePicker theo theme
+    val datePickerContainerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+    val datePickerTextColor = if (isDarkMode) Color.White else Color.Black
+    val datePickerButtonColor = if (isDarkMode) Color.White else Color.Black
+
     val calendar = Calendar.getInstance()
     var selectedDate by remember { mutableStateOf(calendar.timeInMillis) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -266,6 +267,7 @@ fun HistoryScreen(navController: NavHostController) {
             }
         }
 
+        // DatePicker Dialog - Cập nhật theo theme
         if (showDatePicker) {
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -276,22 +278,36 @@ fun HistoryScreen(navController: NavHostController) {
                             showDatePicker = false
                         }
                     ) {
-                        Text("OK", color = Color(0xFF3C2E7E))
+                        Text("OK", color = datePickerButtonColor)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDatePicker = false }) {
-                        Text(stringResource(id = R.string.cancel), color = Color.Gray)
+                        Text(stringResource(id = R.string.cancel), color = datePickerButtonColor)
                     }
                 },
-                colors = DatePickerDefaults.colors(containerColor = Color.White)
+                colors = DatePickerDefaults.colors(
+                    containerColor = datePickerContainerColor
+                )
             ) {
                 DatePicker(
                     state = datePickerState,
                     colors = DatePickerDefaults.colors(
-                        selectedDayContainerColor = Color(0xFF3C2E7E),
-                        todayContentColor = Color(0xFF3C2E7E),
-                        todayDateBorderColor = Color(0xFF3C2E7E)
+                        containerColor = datePickerContainerColor,
+                        titleContentColor = datePickerTextColor,
+                        headlineContentColor = datePickerTextColor,
+                        selectedDayContainerColor = Color(0xFFFEE912),
+                        selectedDayContentColor = Color.Black,
+                        todayContentColor = datePickerTextColor,
+                        todayDateBorderColor = Color.Transparent,
+                        dayContentColor = datePickerTextColor,
+                        weekdayContentColor = datePickerTextColor,
+                        yearContentColor = datePickerTextColor,
+                        currentYearContentColor = datePickerTextColor,
+                        selectedYearContainerColor = Color(0xFFFEE912),
+                        selectedYearContentColor = Color.Black,
+                        navigationContentColor = datePickerTextColor,
+                        dividerColor = Color.Transparent
                     )
                 )
             }

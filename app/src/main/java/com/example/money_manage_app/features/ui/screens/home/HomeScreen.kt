@@ -56,8 +56,14 @@ fun HomeScreen(navController: NavHostController) {
     val textPrimaryColor = if (isDarkMode) Color.White else Color.Black
     val textOnCardColor = Color.White
     val borderColor = if (isDarkMode) Color(0xFF404040) else Color.Gray
+    val dateBoxBackground = if (isDarkMode) Color(0xFF2C2C2C) else Color.White
     val expenseBoxColor = Color(0xFFFFEB3B) // Luôn giữ màu vàng
     val incomeBoxColor = Color(0xFFF5F5F5) // Luôn giữ màu xám nhạt
+
+    // Màu cho DatePicker theo theme
+    val datePickerContainerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+    val datePickerTextColor = if (isDarkMode) Color.White else Color.Black
+    val datePickerButtonColor = if (isDarkMode) Color.White else Color.Black
 
     Box(
         modifier = Modifier
@@ -76,7 +82,7 @@ fun HomeScreen(navController: NavHostController) {
                 text = stringResource(R.string.home_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.Black, // Luôn giữ màu đen
+                color = Color.Black, // Luôn giữ màu đen trên nền vàng
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 16.dp, top = 8.dp)
@@ -129,7 +135,7 @@ fun HomeScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-                    .background(if (isDarkMode) Color(0xFF2C2C2C) else Color.White)
+                    .background(dateBoxBackground)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -251,7 +257,7 @@ fun HomeScreen(navController: NavHostController) {
             }
         }
 
-        // Date Picker Dialog
+        // Date Picker Dialog - Cập nhật theo theme
         if (showDatePicker) {
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -262,33 +268,39 @@ fun HomeScreen(navController: NavHostController) {
                             showDatePicker = false
                         }
                     ) {
-                        Text("OK", color = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E))
+                        Text("OK", color = datePickerButtonColor)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDatePicker = false }) {
                         Text(
                             text = if (currentLanguage == "English") "Cancel" else "Hủy",
-                            color = if (isDarkMode) Color.White else Color.Gray
+                            color = datePickerButtonColor
                         )
                     }
                 },
                 colors = DatePickerDefaults.colors(
-                    containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+                    containerColor = datePickerContainerColor
                 )
             ) {
                 DatePicker(
                     state = datePickerState,
                     colors = DatePickerDefaults.colors(
-                        containerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White,
-                        selectedDayContainerColor = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E),
-                        todayContentColor = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E),
-                        todayDateBorderColor = if (isDarkMode) Color(0xFFFFEB3B) else Color(0xFF3C2E7E),
-                        dayContentColor = textPrimaryColor,
-                        weekdayContentColor = textPrimaryColor,
-                        currentYearContentColor = textPrimaryColor,
-                        selectedYearContentColor = Color.White,
-                        yearContentColor = textPrimaryColor
+                        containerColor = datePickerContainerColor,
+                        titleContentColor = datePickerTextColor,
+                        headlineContentColor = datePickerTextColor,
+                        selectedDayContainerColor = Color(0xFFFEE912),
+                        selectedDayContentColor = Color.Black,
+                        todayContentColor = datePickerTextColor,
+                        todayDateBorderColor = Color.Transparent,
+                        dayContentColor = datePickerTextColor,
+                        weekdayContentColor = datePickerTextColor,
+                        yearContentColor = datePickerTextColor,
+                        currentYearContentColor = datePickerTextColor,
+                        selectedYearContainerColor = Color(0xFFFEE912),
+                        selectedYearContentColor = Color.Black,
+                        navigationContentColor = datePickerTextColor,
+                        dividerColor = Color.Transparent
                     )
                 )
             }

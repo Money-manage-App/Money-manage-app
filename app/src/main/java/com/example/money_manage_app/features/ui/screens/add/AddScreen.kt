@@ -32,7 +32,7 @@ fun AddScreen(navController: NavHostController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFFD600))
+                    .background(Color(0xFFFEE912))
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
                 Row(
