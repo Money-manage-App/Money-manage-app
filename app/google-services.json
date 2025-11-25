@@ -38,6 +38,14 @@
           }
         },
         {
+          "client_id": "670135857127-tnf7pmhl5e0lg0ktihtgbllt3gshodd4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.money_manage_app",
+            "certificate_hash": "a966a9a997135974d0f23df4dbb2c12230af6acd"
+          }
+        },
+        {
           "client_id": "670135857127-7l1sc670mf6vr4edtfo0kud4uk5dctj8.apps.googleusercontent.com",
           "client_type": 3
         }
