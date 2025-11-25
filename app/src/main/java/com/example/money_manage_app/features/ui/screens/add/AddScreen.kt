@@ -8,6 +8,7 @@ import com.example.money_manage_app.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,19 +21,19 @@ import androidx.navigation.NavHostController
 
 @Composable
 fun AddScreen(navController: NavHostController) {
+    val colors = MaterialTheme.colorScheme
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8))
+            .background(colors.background) // Thay Color(0xFFF8F8F8)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Header vàng
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header vàng -> dùng primary
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFFD600))
+                    .background(colors.primary) // Thay Color(0xFFFEE912)
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
                 Row(
@@ -42,7 +43,7 @@ fun AddScreen(navController: NavHostController) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.Black,
+                        tint = colors.onPrimary, // Thay Color.Black
                         modifier = Modifier
                             .size(24.dp)
                             .clickable { navController.popBackStack() }
@@ -50,48 +51,45 @@ fun AddScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.width(100.dp))
                     Text(
                         text = stringResource(R.string.note_transaction),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
+                        color = colors.onPrimary, // Thay Color.Black
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp)
                     )
                 }
             }
 
-            // Content area với text ở giữa
+            // Content area với text
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .background(Color.White),
+                    .background(colors.background), // Thay Color.White
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Xin chào, ...!",
+                    stringResource(R.string.hello),
                     fontSize = 16.sp,
-                    color = Color.Black,
+                    color = colors.onSurface, // Thay Color.Black
                     fontWeight = FontWeight.Normal
                 )
             }
         }
 
-        // Bottom bar với 3 nút (fixed ở dưới cùng)
+        // Bottom bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
         ) {
-            // Đường kẻ mờ phía trên
             Column {
                 Divider(
                     thickness = 0.5.dp,
-                    color = Color(0xFFE0E0E0)
+                    color = colors.outline.copy(alpha = 0.5f) // Thay Color(0xFFE0E0E0)
                 )
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFFAFAFA))
-                        .padding(vertical =35.dp, horizontal = 60.dp),
+                        .background(colors.surface) // Thay Color(0xFFFAFAFA)
+                        .padding(vertical = 35.dp, horizontal = 60.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -99,7 +97,7 @@ fun AddScreen(navController: NavHostController) {
                     Box(
                         modifier = Modifier
                             .size(60.dp)
-                            .background(Color(0xFFBDBDBD), CircleShape)
+                            .background(Color.Gray, CircleShape) // Có thể dùng colors.secondaryContainer
                             .clickable { /* Xử lý keyboard */ },
                         contentAlignment = Alignment.Center
                     ) {
@@ -111,29 +109,28 @@ fun AddScreen(navController: NavHostController) {
                         )
                     }
 
-                    // Nút microphone (chính giữa - lớn hơn)
+                    // Nút microphone
                     Box(
                         modifier = Modifier
                             .size(80.dp)
-                            .background(Color.Black, CircleShape)
+                            .background(colors.primary, CircleShape) // theme-aware
                             .clickable { /* Xử lý voice */ },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
                             contentDescription = "Microphone",
-                            tint = Color(0xFFFFD600),
+                            tint = colors.onPrimary, // theme-aware
                             modifier = Modifier.size(40.dp)
                         )
                     }
 
-                    // Nút note - Click vào đây sẽ mở AddScreen
+                    // Nút note
                     Box(
                         modifier = Modifier
                             .size(60.dp)
-                            .background(Color(0xFFBDBDBD), CircleShape)
+                            .background(Color.Gray, CircleShape)
                             .clickable {
-                                // Navigate tới AddScreen
                                 navController.navigate("add_transaction")
                             },
                         contentAlignment = Alignment.Center

@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -125,10 +126,11 @@ fun CategorySettingScreen(navController: NavHostController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
+
                     Text(
                         text = stringResource(R.string.setting_category),
-                        color = colors.onPrimary,
-                        fontSize = (20.sp * fontScale)
+                        color = Color.Black,
+                        style = typography.titleMedium.copy(fontSize = 20.sp)
                     )
                 },
                 navigationIcon = {

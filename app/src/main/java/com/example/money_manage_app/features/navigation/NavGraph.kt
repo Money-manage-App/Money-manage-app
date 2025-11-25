@@ -5,6 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.money_manage_app.MyApp
+import com.example.money_manage_app.data.repository.UserRepository
 
 import com.example.money_manage_app.features.ui.screens.home.HomeScreen
 import com.example.money_manage_app.features.ui.screens.history.HistoryScreen
@@ -24,6 +26,8 @@ import com.example.money_manage_app.features.ui.screens.settings.settings.Curren
 
 // Import màn hình chi tiết giao dịch
 import com.example.money_manage_app.features.ui.screens.history.TransactionDetailScreen
+import com.example.money_manage_app.features.viewmodel.UserViewModel
+import com.example.money_manage_app.features.viewmodel.UserViewModelFactory
 
 @Composable
 fun NavGraph(
@@ -46,8 +50,22 @@ fun NavGraph(
         composable(Routes.Settings) { SettingsScreen(navController) }
 
         // Hồ sơ người dùng
-        composable(Routes.UserProfile) { UserProfileScreen(navController) }
-        composable(Routes.EditProfile) { EditProfileScreen(navController) }
+        composable("${Routes.UserProfile}/{userId}") { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: "guest"
+            val userRepository = UserRepository(MyApp.db.userDao())
+            val viewModel = UserViewModelFactory(userRepository).create(UserViewModel::class.java)
+            UserProfileScreen(navController, userId, viewModel)
+        }
+
+        composable("${Routes.EditProfile}/{userId}") { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: "guest"
+            val userRepository = UserRepository(MyApp.db.userDao())
+            val viewModel = UserViewModelFactory(userRepository).create(UserViewModel::class.java)
+            EditProfileScreen(navController, userId, viewModel)
+        }
+
+
+
 
         // Cài đặt
         composable(Routes.ThemeSettings) { ThemeSettingScreen(navController) }

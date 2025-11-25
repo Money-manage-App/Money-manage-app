@@ -1,10 +1,16 @@
+package com.example.money_manage_app.data.local.entity
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "users")
+@Entity
 data class User(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey val userId: String, // "guest" hoặc Google UID
     val name: String,
-    val email: String,
-    val balance: Double = 0.0
+    val email: String?,
+    val phone: String?,
+    val gender: String?,
+    val photo: String?,
+    val isGuest: Boolean,
+    val createdAt: Long
 )

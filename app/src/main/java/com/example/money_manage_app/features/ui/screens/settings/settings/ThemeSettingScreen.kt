@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +40,9 @@ fun ThemeSettingScreen(navController: NavHostController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(
-                        text = stringResource(R.string.theme),
-                        color = colors.onPrimary,
-                        style = MaterialTheme.typography.titleLarge
+                    Text(stringResource(R.string.theme),
+                        color = Color.Black,
+                        style = typography.titleMedium.copy(fontSize = 20.sp)
                     )
                 },
                 navigationIcon = {

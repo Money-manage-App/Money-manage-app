@@ -1,12 +1,10 @@
 package com.example.money_manage_app.features.ui.screens.report
 
-import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,14 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.money_manage_app.R
-import com.example.money_manage_app.features.common.components.YellowHeader
 import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import com.example.money_manage_app.data.local.datastore.FontSizeManager
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ReportScreen(navController: NavHostController) {
 
@@ -35,9 +32,15 @@ fun ReportScreen(navController: NavHostController) {
     val calendar = Calendar.getInstance()
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    var startDate by remember { mutableStateOf<Date?>(null) }
-    var endDate by remember { mutableStateOf<Date?>(null) }
-    var selectingStart by remember { mutableStateOf(true) }
+    // State cho DateRangePicker
+    var startDate by remember { mutableStateOf(calendar.timeInMillis) }
+    var endDate by remember { mutableStateOf(calendar.timeInMillis) }
+    var showDateRangePicker by remember { mutableStateOf(false) }
+
+    val dateRangePickerState = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = startDate,
+        initialSelectedEndDateMillis = endDate
+    )
 
     // 🎨 Lấy theme preference (dark mode)
     val themePref = remember { ThemePreference(context) }
@@ -62,26 +65,18 @@ fun ReportScreen(navController: NavHostController) {
     val expenseTextColor = if (isDarkMode) Color(0xFFFF6B6B) else Color(0xFFE53935)
     val incomeTextColor = if (isDarkMode) Color(0xFF66BB6A) else Color(0xFF43A047)
 
+    // Màu cho DatePicker theo theme
+    val datePickerContainerColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+    val datePickerTextColor = if (isDarkMode) Color.White else Color.Black
+    val datePickerButtonColor = if (isDarkMode) Color.White else Color.Black
+    val datePickerHeadlineColor = if (isDarkMode) Color.White else Color.Black
+
     // 🌐 Text đa ngôn ngữ từ string resources
     val reportTitle = stringResource(R.string.report)
     val selectDateRange = stringResource(R.string.report_date_range)
     val totalBalance = stringResource(R.string.total_balance)
     val expense = stringResource(R.string.expense)
     val income = stringResource(R.string.income)
-
-    // --- Dialog chọn ngày ---
-    fun showDatePicker(onDateSelected: (Date) -> Unit) {
-        DatePickerDialog(
-            context,
-            { _, year, month, day ->
-                calendar.set(year, month, day)
-                onDateSelected(calendar.time)
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
 
     Column(
         modifier = Modifier
@@ -116,21 +111,9 @@ fun ReportScreen(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clickable {
-                            if (startDate == null) {
-                                selectingStart = true
-                                showDatePicker { date ->
-                                    startDate = date
-                                }
-                            } else {
-                                selectingStart = false
-                                showDatePicker { date ->
-                                    endDate = date
-                                }
-                            }
-                        }
+                        .clickable { showDateRangePicker = true }
                 ) {
-                Row(
+                    Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxSize()
@@ -144,11 +127,7 @@ fun ReportScreen(navController: NavHostController) {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = when {
-                                startDate == null -> selectDateRange
-                                endDate == null -> "${dateFormatter.format(startDate!!)} - ..."
-                                else -> "${dateFormatter.format(startDate!!)} - ${dateFormatter.format(endDate!!)}"
-                            },
+                            text = "${dateFormatter.format(Date(startDate))} - ${dateFormatter.format(Date(endDate))}",
                             fontSize = (16.sp * fontScale),
                             fontWeight = FontWeight.Medium,
                             color = textPrimary,
@@ -256,6 +235,109 @@ fun ReportScreen(navController: NavHostController) {
                     }
                 }
             }
+        }
+    }
+
+    // DateRangePicker Dialog - Chọn 2 ngày theo theme
+    if (showDateRangePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDateRangePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        dateRangePickerState.selectedStartDateMillis?.let {
+                            startDate = it
+                        }
+                        dateRangePickerState.selectedEndDateMillis?.let {
+                            endDate = it
+                        }
+                        showDateRangePicker = false
+                    }
+                ) {
+                    Text("OK", color = datePickerButtonColor)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDateRangePicker = false }) {
+                    Text(
+                        text = if (currentLanguage == "English") "Cancel" else "Hủy",
+                        color = datePickerButtonColor
+                    )
+                }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = datePickerContainerColor
+            )
+        ) {
+            DateRangePicker(
+                state = dateRangePickerState,
+                title = {
+                    Text(
+                        text = if (currentLanguage == "English") "Select date range" else "Chọn khoảng thời gian",
+                        modifier = Modifier.padding(16.dp),
+                        color = datePickerTextColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                headline = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = if (currentLanguage == "English") "From" else "Từ ngày",
+                                fontSize = 12.sp,
+                                color = datePickerTextColor.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = dateRangePickerState.selectedStartDateMillis?.let {
+                                    dateFormatter.format(Date(it))
+                                } ?: "--/--/----",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = datePickerHeadlineColor
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = if (currentLanguage == "English") "To" else "Đến ngày",
+                                fontSize = 12.sp,
+                                color = datePickerTextColor.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = dateRangePickerState.selectedEndDateMillis?.let {
+                                    dateFormatter.format(Date(it))
+                                } ?: "--/--/----",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = datePickerHeadlineColor
+                            )
+                        }
+                    }
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = datePickerContainerColor,
+                    titleContentColor = datePickerTextColor,
+                    headlineContentColor = datePickerHeadlineColor,
+                    selectedDayContainerColor = Color(0xFFFEE912),
+                    selectedDayContentColor = Color.Black,
+                    todayContentColor = datePickerTextColor,
+                    todayDateBorderColor = Color.Transparent,
+                    dayContentColor = datePickerTextColor,
+                    weekdayContentColor = datePickerTextColor,
+                    yearContentColor = datePickerTextColor,
+                    currentYearContentColor = datePickerTextColor,
+                    selectedYearContainerColor = Color(0xFFFEE912),
+                    selectedYearContentColor = Color.Black,
+                    navigationContentColor = datePickerTextColor,
+                    dividerColor = Color.Transparent,
+                    dayInSelectionRangeContainerColor = Color(0xFFFEE912).copy(alpha = 0.3f),
+                    dayInSelectionRangeContentColor = Color.Black
+                )
+            )
         }
     }
 }

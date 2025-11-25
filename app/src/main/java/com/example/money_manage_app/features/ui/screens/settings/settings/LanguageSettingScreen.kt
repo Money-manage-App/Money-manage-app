@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 import com.example.money_manage_app.features.common.utils.LocaleHelper
 import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +41,8 @@ fun LanguageSettingScreen(navController: NavHostController) {
                 title = {
                     Text(
                         text = if (lang == "English") "Language" else "Ngôn ngữ",
-                        color = colors.onPrimary,
-                        style = typography.titleLarge
+                        color = Color.Black,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp)
                     )
                 },
                 navigationIcon = {

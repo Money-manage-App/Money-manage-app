@@ -59,6 +59,7 @@
 
     <!-- Add Screen -->
     <string name="note_transaction">Ghi chú giao dịch</string>
+    <string name="hello">Xin chào, ...!</string>
 
     <!-- Add Transaction Screen -->
     <string name="add">Thêm</string>
@@ -69,7 +70,7 @@
 
     <!-- Category Screen -->
     <string name="add_category">Thêm dah mục</string>
-    <string name="setting_category">cài đặt danh mục</string>
+    <string name="setting_category">Cài đặt danh mục</string>
 
     <!-- Font Size Screen-->
     <string name="adjust_font_size">Điều chỉnh cỡ chữ</string>
