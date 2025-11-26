@@ -1,11 +1,14 @@
 package com.example.money_manage_app.features.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.money_manage_app.MyApp
+import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.data.repository.UserRepository
 
 import com.example.money_manage_app.features.ui.screens.home.HomeScreen
@@ -39,7 +42,8 @@ fun NavGraph(
     val userRepository = UserRepository(MyApp.db.userDao())
     val userViewModel = UserViewModelFactory(userRepository)
         .create(UserViewModel::class.java)
-
+    val context = LocalContext.current
+    val themePreference = remember { ThemePreference(context) }
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -81,7 +85,10 @@ fun NavGraph(
         composable(Routes.AddIncomeCategory) { AddIncomeCategoryScreen(navController) }
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
 
-        composable(Routes.AddTransaction) { AddTransactionScreen(navController) }
+        composable(Routes.AddTransaction) {
+            AddTransactionScreen(
+            navController = navController,
+        ) }
 
         // ✅ Route xem chi tiết giao dịch
         composable("${Routes.TransactionDetail}/{id}") { backStackEntry ->

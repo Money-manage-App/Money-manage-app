@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.money_manage_app.R
+import com.example.money_manage_app.data.local.datastore.ThemePreference
+import com.example.money_manage_app.data.local.datastore.FontSizeManager
 
 data class Category(
     val name: String,
@@ -35,6 +38,14 @@ data class Category(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val themePref = remember { ThemePreference(context) }
+    val fontManager = remember { FontSizeManager(context) }
+
+    val isDark by themePref.isDarkMode.collectAsState(initial = false)
+    val fontScale by fontManager.fontSizeFlow.collectAsState(initial = 1f)
+    val colors = MaterialTheme.colorScheme
+
     var selectedTab by remember { mutableStateOf(0) }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var showInputDialog by remember { mutableStateOf(false) }
@@ -63,6 +74,8 @@ fun AddTransactionScreen(navController: NavHostController) {
     if (showInputDialog && selectedCategory != null) {
         TransactionInputDialog(
             category = selectedCategory!!,
+            isDark = isDark,
+            fontScale = fontScale,
             onDismiss = {
                 showInputDialog = false
                 selectedCategory = null
@@ -71,7 +84,6 @@ fun AddTransactionScreen(navController: NavHostController) {
                 showInputDialog = false
                 selectedCategory = null
                 navController.navigate("history") {
-                    // Xóa toàn bộ stack để không thể back lại màn hình Add
                     popUpTo(0) { inclusive = true }
                 }
             }
@@ -81,12 +93,12 @@ fun AddTransactionScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.background)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFFFD600))
+                .background(colors.primary)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(
@@ -100,7 +112,7 @@ fun AddTransactionScreen(navController: NavHostController) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.Black
+                        tint = colors.onPrimary
                     )
                 }
                 Spacer(modifier = Modifier.width(120.dp))
@@ -108,7 +120,7 @@ fun AddTransactionScreen(navController: NavHostController) {
                     text = stringResource(R.string.add),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = colors.onPrimary
                 )
             }
         }
@@ -123,7 +135,10 @@ fun AddTransactionScreen(navController: NavHostController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp)
-                    .background(Color(0xFFE8E8E8), RoundedCornerShape(6.dp))
+                    .background(
+                        if (isDark) Color(0xFF2C2C2C) else Color(0xFFE8E8E8),
+                        RoundedCornerShape(6.dp)
+                    )
             ) {}
 
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -131,12 +146,14 @@ fun AddTransactionScreen(navController: NavHostController) {
                     text = stringResource(R.string.expense),
                     isSelected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
+                    isDark = isDark,
                     modifier = Modifier.weight(1f)
                 )
                 TabButton(
                     text = stringResource(R.string.income),
                     isSelected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
+                    isDark = isDark,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -158,6 +175,7 @@ fun AddTransactionScreen(navController: NavHostController) {
                         CategoryItem(
                             category = category,
                             isSelected = false,
+                            isDark = isDark,
                             onClick = {
                                 selectedCategory = category
                                 showInputDialog = true
@@ -179,6 +197,8 @@ fun AddTransactionScreen(navController: NavHostController) {
 @Composable
 fun TransactionInputDialog(
     category: Category,
+    isDark: Boolean,
+    fontScale: Float,
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit
 ) {
@@ -202,8 +222,6 @@ fun TransactionInputDialog(
         }
     }
 
-    // Thay thế phần DatePickerDialog trong TransactionInputDialog
-
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = selectedCalendar.timeInMillis
@@ -222,36 +240,36 @@ fun TransactionInputDialog(
                     showDatePicker = false
                     showTimePicker = true
                 }) {
-                    Text("OK", color = Color.Black)
+                    Text("OK", color = if (isDark) Color.White else Color.Black)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel), color = Color.Black)
+                    Text(stringResource(R.string.cancel), color = if (isDark) Color.White else Color.Black)
                 }
             },
             colors = DatePickerDefaults.colors(
-                containerColor = Color.White  // Nền dialog màu trắng
+                containerColor = if (isDark) Color(0xFF1E1E1E) else Color.White
             )
         ) {
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    containerColor = Color.White,  // Nền lịch màu trắng
-                    titleContentColor = Color.Black,  // Màu chữ "Chọn ngày" màu đen
-                    headlineContentColor = Color.Black,  // Màu chữ tiêu đề ngày được chọn
-                    selectedDayContainerColor = Color(0xFFFEE912),  // Ngày được chọn màu vàng FEE912
-                    selectedDayContentColor = Color.Black,  // Màu chữ của ngày được chọn
-                    todayContentColor = Color.Black,  // Màu chữ ngày hôm nay
-                    todayDateBorderColor = Color.Transparent,  // Không có viền ngày hôm nay
-                    dayContentColor = Color.Black,  // Màu chữ các ngày thường
-                    weekdayContentColor = Color.Black,  // Màu chữ thứ trong tuần
-                    yearContentColor = Color.Black,  // Màu chữ năm
-                    currentYearContentColor = Color.Black,  // Màu chữ năm hiện tại
-                    selectedYearContainerColor = Color(0xFFFEE912),  // Nền năm được chọn
-                    selectedYearContentColor = Color.Black,  // Màu chữ năm được chọn
-                    navigationContentColor = Color.Black,  // Màu mũi tên điều hướng
-                    dividerColor = Color.Transparent  // Ẩn đường phân cách
+                    containerColor = if (isDark) Color(0xFF1E1E1E) else Color.White,
+                    titleContentColor = if (isDark) Color.White else Color.Black,
+                    headlineContentColor = if (isDark) Color.White else Color.Black,
+                    selectedDayContainerColor = Color(0xFFFEE912),
+                    selectedDayContentColor = Color.Black,
+                    todayContentColor = if (isDark) Color.White else Color.Black,
+                    todayDateBorderColor = Color.Transparent,
+                    dayContentColor = if (isDark) Color.White else Color.Black,
+                    weekdayContentColor = if (isDark) Color.White else Color.Black,
+                    yearContentColor = if (isDark) Color.White else Color.Black,
+                    currentYearContentColor = if (isDark) Color.White else Color.Black,
+                    selectedYearContainerColor = Color(0xFFFEE912),
+                    selectedYearContentColor = Color.Black,
+                    navigationContentColor = if (isDark) Color.White else Color.Black,
+                    dividerColor = Color.Transparent
                 )
             )
         }
@@ -265,14 +283,18 @@ fun TransactionInputDialog(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text (stringResource(R.string.select_time))},
+            title = { Text(stringResource(R.string.select_time), color = if (isDark) Color.White else Color.Black) },
+            containerColor = if (isDark) Color.Black else Color.White,
             text = {
                 TimePicker(
                     state = timePickerState,
                     colors = TimePickerDefaults.colors(
-                        clockDialColor = Color(0xFFFFF9C4),
+                        clockDialColor = if (isDark) Color(0xFF2C2C2C) else Color(0xFFFFF9C4),
                         selectorColor = Color(0xFFFFD600),
-                        timeSelectorSelectedContainerColor = Color(0xFFFFD600)
+                        timeSelectorSelectedContainerColor = Color(0xFFFFD600),
+                        periodSelectorSelectedContentColor = Color.Black,
+                        timeSelectorSelectedContentColor = Color.Black,
+                        clockDialSelectedContentColor = Color.Black
                     )
                 )
             },
@@ -301,7 +323,9 @@ fun TransactionInputDialog(
                 .fillMaxWidth()
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF1E1E1E) else Color.White
+            )
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(
@@ -324,9 +348,9 @@ fun TransactionInputDialog(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = category.name,
-                        fontSize = 18.sp,
+                        fontSize = (18.sp * fontScale),
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = if (isDark) Color.White else Color.Black
                     )
                 }
 
@@ -335,7 +359,10 @@ fun TransactionInputDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+                        .background(
+                            if (isDark) Color(0xFF2C2C2C) else Color(0xFFF5F5F5),
+                            RoundedCornerShape(8.dp)
+                        )
                         .clickable { showDatePicker = true }
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -349,8 +376,8 @@ fun TransactionInputDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = currentDateTime,
-                        fontSize = 14.sp,
-                        color = Color.Black,
+                        fontSize = (14.sp * fontScale),
+                        color = if (isDark) Color.White else Color.Black,
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
@@ -367,7 +394,7 @@ fun TransactionInputDialog(
                     value = amount,
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Số tiền") },
+                    label = { Text("Số tiền", color = if (isDark) Color.White else Color.Black) },
                     placeholder = { Text("0") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
@@ -375,8 +402,10 @@ fun TransactionInputDialog(
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFFFD600),
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedLabelColor = Color(0xFFFFD600)
+                        unfocusedBorderColor = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0),
+                        focusedLabelColor = Color(0xFFFFD600),
+                        focusedTextColor = if (isDark) Color.White else Color.Black,
+                        unfocusedTextColor = if (isDark) Color.White else Color.Black
                     ),
                     singleLine = true
                 )
@@ -387,12 +416,14 @@ fun TransactionInputDialog(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Ghi chú") },
+                    label = { Text("Ghi chú", color = if (isDark) Color.White else Color.Black) },
                     placeholder = { Text("Nhập ghi chú...") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFFFD600),
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedLabelColor = Color(0xFFFFD600)
+                        unfocusedBorderColor = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0),
+                        focusedLabelColor = Color(0xFFFFD600),
+                        focusedTextColor = if (isDark) Color.White else Color.Black,
+                        unfocusedTextColor = if (isDark) Color.White else Color.Black
                     ),
                     maxLines = 3
                 )
@@ -426,6 +457,7 @@ fun TabButton(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
+    isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -434,7 +466,10 @@ fun TabButton(
             .padding(4.dp)
             .then(
                 if (isSelected) {
-                    Modifier.background(Color.White, RoundedCornerShape(4.dp))
+                    Modifier.background(
+                        if (isDark) Color(0xFF1E1E1E) else Color.White,
+                        RoundedCornerShape(4.dp)
+                    )
                 } else {
                     Modifier
                 }
@@ -445,7 +480,7 @@ fun TabButton(
         Text(
             text = text,
             fontSize = 14.sp,
-            color = Color.Black,
+            color = if (isDark) Color.White else Color.Black,
             fontWeight = FontWeight.Normal
         )
     }
@@ -455,6 +490,7 @@ fun TabButton(
 fun CategoryItem(
     category: Category,
     isSelected: Boolean,
+    isDark: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -466,12 +502,12 @@ fun CategoryItem(
             modifier = Modifier
                 .size(48.dp)
                 .background(
-                    color = if (isSelected) Color(0xFFFFD600) else Color.White,
+                    color = if (isSelected) Color(0xFFFFD600) else if (isDark) Color(0xFF2C2C2C) else Color.White,
                     shape = CircleShape
                 )
                 .border(
                     width = if (isSelected) 0.dp else 1.dp,
-                    color = Color(0xFFE0E0E0),
+                    color = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -479,7 +515,7 @@ fun CategoryItem(
             Icon(
                 imageVector = category.icon,
                 contentDescription = category.name,
-                tint = Color.Black,
+                tint = if (isDark) Color.White else Color.Black,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -487,7 +523,7 @@ fun CategoryItem(
         Text(
             text = category.name,
             fontSize = 11.sp,
-            color = Color.Black,
+            color = if (isDark) Color.White else Color.Black,
             textAlign = TextAlign.Center,
             maxLines = 1
         )
