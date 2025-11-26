@@ -21,10 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
-import com.example.money_manage_app.MyApp
 import com.example.money_manage_app.R
 import com.example.money_manage_app.features.viewmodel.UserViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
@@ -38,21 +36,14 @@ fun UserProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.user_profile_title),
-                        color = Color.Black,
-                        style = typography.titleMedium.copy(fontSize = 20.sp)
-                    )
-                },
+                title = { Text("Hồ sơ người dùng", color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colors.primary,
-                    titleContentColor = colors.onPrimary
+                    containerColor = Color(0xFFFEE912)
                 )
             )
         }
@@ -64,26 +55,22 @@ fun UserProfileScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
+            Spacer(Modifier.height(32.dp))
             // Avatar
             Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
+                modifier = Modifier.size(120.dp).clip(CircleShape)
             ) {
-                if (!user?.photo.isNullOrEmpty()) {
+                val photoUrl = user?.photo
+                if (!photoUrl.isNullOrEmpty()) {
                     Image(
-                        painter = rememberAsyncImagePainter(user!!.photo!!),
+                        painter = rememberAsyncImagePainter(photoUrl),
                         contentDescription = "Profile",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(colors.secondaryContainer),
+                        modifier = Modifier.fillMaxSize().background(colors.secondaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -96,26 +83,32 @@ fun UserProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(Modifier.height(20.dp))
 
-            // Thông tin user
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-                ProfileItem(stringResource(R.string.full_name), user?.name ?: "", stringResource(R.string.no_name))
-                ProfileItem("Email", user?.email ?: "", stringResource(R.string.no_email))
-                ProfileItem(stringResource(R.string.phone_number), user?.phone ?: "", stringResource(R.string.no_phone))
-                ProfileItem(stringResource(R.string.gender), user?.gender ?: "", stringResource(R.string.no_gender))
+                ProfileItem("Họ & tên", user?.name ?: "", "Chưa có tên")
+                ProfileItem("Email", user?.email ?: "", "Chưa có email")
+                ProfileItem("Số điện thoại", user?.phone ?: "", "Chưa có số điện thoại")
+                ProfileItem(
+                    "Giới tính",
+                    when(user?.gender){
+                        true -> "Nam"
+                        false -> "Nữ"
+                        else -> "Chưa chọn"
+                    },
+                    "Chưa chọn"
+                )
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(Modifier.height(30.dp))
 
             Button(
                 onClick = { navController.navigate("edit_profile/$userId") },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
+                modifier = Modifier.fillMaxWidth(0.8f)
             ) {
                 Icon(Icons.Default.Edit, contentDescription = "Edit")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.edit_profile_title))
+                Spacer(Modifier.width(8.dp))
+                Text("Chỉnh sửa")
             }
         }
     }

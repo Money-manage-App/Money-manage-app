@@ -36,6 +36,9 @@ fun NavGraph(
     startAtSettings: Boolean = false
 ) {
     val startDestination = if (startAtSettings) Routes.Settings else Routes.Home
+    val userRepository = UserRepository(MyApp.db.userDao())
+    val userViewModel = UserViewModelFactory(userRepository)
+        .create(UserViewModel::class.java)
 
     NavHost(
         navController = navController,
@@ -46,7 +49,7 @@ fun NavGraph(
         composable(Routes.History) { HistoryScreen(navController) }
         composable(Routes.Add) { AddScreen(navController) }
         composable(Routes.Report) { ReportScreen(navController) }
-        composable(Routes.Profile) { ProfileScreen(navController) }
+        composable(Routes.Profile) { ProfileScreen(navController, userViewModel) }
         composable(Routes.Settings) { SettingsScreen(navController) }
 
         // Hồ sơ người dùng

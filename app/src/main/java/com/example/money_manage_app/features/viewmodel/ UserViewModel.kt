@@ -31,4 +31,9 @@ class UserViewModel(
             repository.deleteUser(id)
         }
     }
+
+    suspend fun getUserOnce(userId: String): User? {
+        return repository.getUserOnce(userId)
+    }
+
 }

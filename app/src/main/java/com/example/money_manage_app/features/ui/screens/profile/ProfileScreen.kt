@@ -1,6 +1,8 @@
+// ProfileScreen.kt
 package com.example.money_manage_app.features.ui.screens.profile
 
 import android.app.Activity
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
@@ -31,32 +33,27 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.money_manage_app.R
-import com.example.money_manage_app.data.local.datastore.*
+import com.example.money_manage_app.data.local.entity.User
+import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavHostController) {
+fun ProfileScreen(
+    navController: NavHostController,
+    userViewModel: UserViewModel
+) {
     val context = LocalContext.current
     val systemUiController = rememberSystemUiController()
     val isDark = isSystemInDarkTheme()
     val colorScheme = MaterialTheme.colorScheme
     val scope = rememberCoroutineScope()
-
-    val languagePref = remember { LanguagePreference(context) }
-    val currentLanguage by languagePref.currentLanguage.collectAsState(initial = "Tiếng Việt")
-
-    val userPrefs = remember { UserPreferences(context) }
-    val auth = FirebaseAuth.getInstance()
-
-    // ✅ Phải dùng .value để cập nhật
-    val currentUser = remember { mutableStateOf(auth.currentUser) }
-
     val brandYellow = if (isDark) Color(0xFFFBC02D) else Color(0xFFFEE912)
     val textColor = if (isDark) Color.White else Color.Black
 
@@ -64,37 +61,62 @@ fun ProfileScreen(navController: NavHostController) {
         systemUiController.setStatusBarColor(brandYellow, darkIcons = !isDark)
     }
 
-    // Google Sign-In setup
+    val auth = FirebaseAuth.getInstance()
+    val currentUserId = auth.currentUser?.uid ?: "guest"
+
+    // State user Room
+    val userState = remember { mutableStateOf<User?>(null) }
+
+    // Observe Room user
+    LaunchedEffect(currentUserId) {
+        userViewModel.getUser(currentUserId).collect { user ->
+            userState.value = user
+        }
+    }
+
+    // Google Sign-In
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken("670135857127-7l1sc670mf6vr4edtfo0kud4uk5dctj8.apps.googleusercontent.com")
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
-    val activity = context as? Activity
-
+    val activity = context as Activity
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
+        ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        if (task.isSuccessful) {
-            val account = task.result
+        try {
+            val account = task.getResult(ApiException::class.java)
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-            auth.signInWithCredential(credential)
-                .addOnCompleteListener(activity!!) { signInTask ->
-                    if (signInTask.isSuccessful) {
-                        val user = auth.currentUser
+            auth.signInWithCredential(credential).addOnCompleteListener(activity) { signInTask ->
+                if (signInTask.isSuccessful) {
+                    val firebaseUser = auth.currentUser
+                    firebaseUser?.let { fu ->
                         scope.launch {
-                            userPrefs.saveUserInfo(
-                                name = user?.displayName ?: "",
-                                email = user?.email ?: "",
-                                phone = user?.phoneNumber ?: "",
-                                gender = "",
-                                photo = user?.photoUrl?.toString() ?: ""
+                            val existingUser = userViewModel.getUserOnce(fu.uid)
+                            val newUser = existingUser?.copy(
+                                email = fu.email ?: existingUser.email,
+                                photo = existingUser.photo ?: fu.photoUrl?.toString()
+                            ) ?: User(
+                                userId = fu.uid,
+                                name = fu.displayName ?: "",
+                                email = fu.email,
+                                phone = null,
+                                gender = null,
+                                photo = fu.photoUrl?.toString(),
+                                isGuest = false,
+                                createdAt = System.currentTimeMillis()
                             )
+                            userViewModel.saveUser(newUser)
+                            userState.value = newUser
                         }
-                        currentUser.value = user // ✅ Cập nhật đúng cách
                     }
+                } else {
+                    Log.e("ProfileScreen", "Firebase auth failed", signInTask.exception)
                 }
+            }
+        } catch (e: ApiException) {
+            Log.e("ProfileScreen", "Google sign in failed", e)
         }
     }
 
@@ -103,7 +125,7 @@ fun ProfileScreen(navController: NavHostController) {
             .fillMaxSize()
             .background(colorScheme.background)
     ) {
-        // 🟡 Header vàng
+        // Header vàng
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -112,11 +134,10 @@ fun ProfileScreen(navController: NavHostController) {
                 .padding(vertical = 32.dp, horizontal = 20.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-
-                val user = currentUser.value
-                if (user?.photoUrl != null) {
+                val user = userState.value
+                if (user?.photo != null) {
                     Image(
-                        painter = rememberAsyncImagePainter(user.photoUrl),
+                        painter = rememberAsyncImagePainter(user.photo),
                         contentDescription = null,
                         modifier = Modifier
                             .size(80.dp)
@@ -135,14 +156,12 @@ fun ProfileScreen(navController: NavHostController) {
                         tint = textColor
                     )
                 }
-
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Crossfade(targetState = user != null) { loggedIn ->
                     if (loggedIn && user != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = user.displayName ?: "Người dùng",
+                                text = user.name.ifBlank { "Người dùng" },
                                 color = textColor,
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                             )
@@ -153,66 +172,46 @@ fun ProfileScreen(navController: NavHostController) {
                             )
                         }
                     } else {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = if (currentLanguage == "English")
-                                    "Sign in"
-                                else "Đăng nhập",
-                                color = textColor,
-                                style = MaterialTheme.typography.titleMedium
+                        Button(
+                            onClick = { launcher.launch(googleSignInClient.signInIntent) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(50),
+                            border = BorderStroke(1.dp, Color.LightGray)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                contentDescription = "Google",
+                                modifier = Modifier.size(18.dp)
                             )
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            Button(
-                                onClick = { launcher.launch(googleSignInClient.signInIntent) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(50),
-                                border = BorderStroke(1.dp, Color.LightGray),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp)
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_google_logo),
-                                    contentDescription = "Google",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (currentLanguage == "English")
-                                        "Sign in with Google"
-                                    else "Đăng nhập bằng Google",
-                                    color = Color.Black,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                "Đăng nhập bằng Google",
+                                color = Color.Black,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(20.dp))
-
-        // 🔹 Các tùy chọn dưới
-        if (currentUser.value != null) {
+        // Options
+        if (userState.value != null) {
             ProfileCardItem(
                 icon = Icons.Default.Logout,
-                title = if (currentLanguage == "English") "Sign out" else "Đăng xuất",
+                title = "Đăng xuất",
                 onClick = {
                     auth.signOut()
                     googleSignInClient.signOut()
-                    scope.launch { userPrefs.clearUserInfo() }
-                    currentUser.value = null // ✅ cập nhật lại state
+                    userState.value = null
                 },
                 brandYellow = brandYellow,
                 colorScheme = colorScheme
             )
         }
-
         ProfileCardItem(
             icon = Icons.Default.Settings,
-            title = if (currentLanguage == "English") "Settings" else "Cài đặt",
+            title = "Cài đặt",
             onClick = { navController.navigate("settings") },
             brandYellow = brandYellow,
             colorScheme = colorScheme

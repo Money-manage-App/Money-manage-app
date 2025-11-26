@@ -82,14 +82,16 @@ fun SettingsScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SettingItem(
-                icon = Icons.Default.AccountCircle,
-                title = stringResource(R.string.profile),
-                onClick = {
-                    // Chỉ navigate sang UserProfileScreen với userId
-                    navController.navigate("${Routes.UserProfile}/$currentUserId")
-                }
-            )
+            if (currentUserId != "guest") {
+                SettingItem(
+                    icon = Icons.Default.AccountCircle,
+                    title = stringResource(R.string.profile),
+                    onClick = {
+                        navController.navigate("${Routes.UserProfile}/$currentUserId")
+                    }
+                )
+            }
+
 
             SettingItem(
                 icon = Icons.Default.Category,

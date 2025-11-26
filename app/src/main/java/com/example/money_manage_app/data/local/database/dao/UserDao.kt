@@ -13,10 +13,12 @@ interface UserDao {
     @Query("SELECT * FROM User WHERE userId = :userId")
     fun getUser(userId: String): Flow<User?>
 
-    @Query("DELETE FROM User WHERE userId = :userId")
-    suspend fun deleteUser(userId: String)
+    @Query("SELECT * FROM User WHERE email = :email LIMIT 1")
+    suspend fun getUserByEmail(email: String): User?
 
     @Update
     suspend fun updateUser(user: User)
 
+    @Query("DELETE FROM User WHERE userId = :userId")
+    suspend fun deleteUser(userId: String)
 }
