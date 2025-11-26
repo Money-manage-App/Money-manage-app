@@ -42,7 +42,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
-
+import androidx.compose.ui.res.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -185,7 +185,7 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                "Đăng nhập bằng Google",
+                                stringResource(R.string.login_email),
                                 color = Color.Black,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -199,7 +199,7 @@ fun ProfileScreen(
         if (userState.value != null) {
             ProfileCardItem(
                 icon = Icons.Default.Logout,
-                title = "Đăng xuất",
+                title= stringResource(R.string.logout),
                 onClick = {
                     auth.signOut()
                     googleSignInClient.signOut()
@@ -211,7 +211,7 @@ fun ProfileScreen(
         }
         ProfileCardItem(
             icon = Icons.Default.Settings,
-            title = "Cài đặt",
+            title = stringResource(R.string.settings_title),
             onClick = { navController.navigate("settings") },
             brandYellow = brandYellow,
             colorScheme = colorScheme

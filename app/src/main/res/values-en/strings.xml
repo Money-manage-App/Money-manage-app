@@ -76,5 +76,5 @@
     <!-- Font Size Screen-->
     <string name="adjust_font_size">Adjust font size</string>
     <string name="preview_text">Preview text size</string>
-
+    <string name="login_email">Sign in with Google</string>
 </resources>

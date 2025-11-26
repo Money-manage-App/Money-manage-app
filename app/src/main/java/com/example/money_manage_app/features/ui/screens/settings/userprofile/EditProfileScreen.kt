@@ -18,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.example.money_manage_app.R
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 // EditProfileScreen.kt
@@ -62,10 +64,10 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Chỉnh sửa hồ sơ") },
+                title = { Text(stringResource(R.string.edit_profile_title),color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back",tint = Color.Black )
                     }
                 },
                 actions = {
@@ -82,7 +84,7 @@ fun EditProfileScreen(
                             navController.popBackStack()
                         }
                     }) {
-                        Icon(Icons.Default.Check, contentDescription = "Save")
+                        Icon(Icons.Default.Check, contentDescription = "Save",tint = Color.Black )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -133,14 +135,14 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Họ & tên") },
+                label = {Text(stringResource(R.string.full_name)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { if (!isGoogleAccount) email = it },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.email)) },
                 enabled = !isGoogleAccount,
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
@@ -148,19 +150,19 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Số điện thoại") },
+                label = { Text(stringResource(R.string.phone_number)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
             Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = gender == true, onClick = { gender = true }, modifier = Modifier.size(28.dp))
-                    Text("Nam", fontSize = 18.sp, modifier = Modifier.padding(start = 4.dp))
+                    Text(stringResource(R.string.male), fontSize = 18.sp, modifier = Modifier.padding(start = 4.dp))
                 }
                 Spacer(modifier = Modifier.width(70.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = gender == false, onClick = { gender = false }, modifier = Modifier.size(28.dp))
-                    Text("Nữ", fontSize = 18.sp, modifier = Modifier.padding(start = 4.dp))
+                    Text(stringResource(R.string.female), fontSize = 18.sp, modifier = Modifier.padding(start = 4.dp))
                 }
             }
         }

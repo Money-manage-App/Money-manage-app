@@ -76,4 +76,7 @@
     <string name="adjust_font_size">Điều chỉnh cỡ chữ</string>
     <string name="preview_text">Văn bản hiển thị</string>
 
+
+    <string name="login_email">Đăng nhập bằng Google</string>
+
 </resources>

@@ -36,10 +36,10 @@ fun UserProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Hồ sơ người dùng", color = Color.Black) },
+                title = { Text(stringResource(R.string.user_profile_title), color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -86,17 +86,17 @@ fun UserProfileScreen(
             Spacer(Modifier.height(20.dp))
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-                ProfileItem("Họ & tên", user?.name ?: "", "Chưa có tên")
-                ProfileItem("Email", user?.email ?: "", "Chưa có email")
-                ProfileItem("Số điện thoại", user?.phone ?: "", "Chưa có số điện thoại")
+                ProfileItem(stringResource(R.string.full_name), user?.name ?: "", stringResource(R.string.no_name))
+                ProfileItem(stringResource(R.string.email), user?.email ?: "", stringResource(R.string.no_email))
+                ProfileItem(stringResource(R.string.phone_number), user?.phone ?: "",stringResource(R.string.no_phone))
                 ProfileItem(
-                    "Giới tính",
+                    stringResource(R.string.gender),
                     when(user?.gender){
-                        true -> "Nam"
-                        false -> "Nữ"
-                        else -> "Chưa chọn"
+                        true -> stringResource(R.string.male)
+                        false -> stringResource(R.string.female)
+                        else -> stringResource(R.string.no_gender)
                     },
-                    "Chưa chọn"
+                    stringResource(R.string.no_gender)
                 )
             }
 
@@ -108,7 +108,7 @@ fun UserProfileScreen(
             ) {
                 Icon(Icons.Default.Edit, contentDescription = "Edit")
                 Spacer(Modifier.width(8.dp))
-                Text("Chỉnh sửa")
+                Text(stringResource(R.string.edit))
             }
         }
     }
