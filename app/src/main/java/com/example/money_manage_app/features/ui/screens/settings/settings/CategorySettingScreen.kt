@@ -22,12 +22,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.money_manage_app.data.local.datastore.*
 import kotlinx.coroutines.launch
 import com.example.money_manage_app.R
+
 data class CategoryItem(val icon: ImageVector, val name: String, val iconName: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,7 +128,6 @@ fun CategorySettingScreen(navController: NavHostController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-
                     Text(
                         text = stringResource(R.string.setting_category),
                         color = Color.Black,
@@ -155,30 +156,49 @@ fun CategorySettingScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-            // Tabs
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = colors.surfaceVariant,
-                contentColor = colors.onSurface
+            // Custom Tab Switcher giống AddTransactionScreen
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 12.dp, bottom = 16.dp)
             ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = {
-                        selectedTab = 0
-                        draggedIndex = null
-                        dragOffset = 0f
-                    },
-                    text = { Text(stringResource(R.string.expense), fontSize = (16.sp * fontScale)) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = {
-                        selectedTab = 1
-                        draggedIndex = null
-                        dragOffset = 0f
-                    },
-                    text = { Text(stringResource(R.string.income), fontSize = (16.sp * fontScale)) }
-                )
+                // Background xám/tối tùy theme
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .background(
+                            if (isDark) Color(0xFF2C2C2C) else Color(0xFFE8E8E8),
+                            RoundedCornerShape(6.dp)
+                        )
+                ) {}
+
+                // Các nút tab
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    TabButton(
+                        text = stringResource(R.string.expense),
+                        isSelected = selectedTab == 0,
+                        onClick = {
+                            selectedTab = 0
+                            draggedIndex = null
+                            dragOffset = 0f
+                        },
+                        isDark = isDark,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TabButton(
+                        text = stringResource(R.string.income),
+                        isSelected = selectedTab == 1,
+                        onClick = {
+                            selectedTab = 1
+                            draggedIndex = null
+                            dragOffset = 0f
+                        },
+                        isDark = isDark,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
             LazyColumn(
@@ -216,6 +236,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                                     isBeingDragged -> colors.surfaceVariant.copy(alpha = 0.8f)
                                     draggedIndex != null && index == targetIndex && index != draggedIndex ->
                                         colors.primary.copy(alpha = 0.2f)
+
                                     else -> Color.Transparent
                                 },
                                 RoundedCornerShape(8.dp)
@@ -330,6 +351,40 @@ fun CategorySettingScreen(navController: NavHostController) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TabButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    isDark: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .padding(4.dp)
+            .then(
+                if (isSelected) {
+                    Modifier.background(
+                        if (isDark) Color(0xFF1E1E1E) else Color.White,
+                        RoundedCornerShape(4.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = if (isDark) Color.White else Color.Black,
+            fontWeight = FontWeight.Normal
+        )
     }
 }
 
