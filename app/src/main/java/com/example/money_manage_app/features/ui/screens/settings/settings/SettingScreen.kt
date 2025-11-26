@@ -6,8 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,29 +25,41 @@ import com.example.money_manage_app.features.viewmodel.UserViewModelFactory
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val auth = FirebaseAuth.getInstance()
-    val currentUserId = auth.currentUser?.uid ?: "guest"
 
-    // Tạo UserViewModel
+    // State để theo dõi user hiện tại
+    var firebaseUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
+
+    // Thêm listener theo dõi auth state
+    DisposableEffect(Unit) {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            firebaseUser = firebaseAuth.currentUser
+        }
+        auth.addAuthStateListener(listener)
+        onDispose { auth.removeAuthStateListener(listener) }
+    }
+
+    // UserViewModel
     val userRepository = com.example.money_manage_app.data.repository.UserRepository(MyApp.db.userDao())
     val userViewModel = UserViewModelFactory(userRepository).create(UserViewModel::class.java)
 
-    // Google sign-in client
+    // Google Sign-in client
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken("670135857127-7l1sc670mf6vr4edtfo0kud4uk5dctj8.apps.googleusercontent.com")
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
-
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -82,41 +93,37 @@ fun SettingsScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (currentUserId != "guest") {
+            // Chỉ hiển thị mục Profile khi đã đăng nhập Google
+            firebaseUser?.let { user ->
                 SettingItem(
                     icon = Icons.Default.AccountCircle,
                     title = stringResource(R.string.profile),
                     onClick = {
-                        navController.navigate("${Routes.UserProfile}/$currentUserId")
+                        navController.navigate("${Routes.UserProfile}/${user.uid}")
                     }
                 )
             }
-
 
             SettingItem(
                 icon = Icons.Default.Category,
                 title = stringResource(R.string.category_settings),
                 onClick = { navController.navigate(Routes.CategorySettings) }
             )
-
             SettingItem(
                 icon = Icons.Default.AttachMoney,
                 title = stringResource(R.string.currency),
                 onClick = { navController.navigate(Routes.CurrencySettings) }
             )
-
             SettingItem(
                 icon = Icons.Default.DisplaySettings,
                 title = stringResource(R.string.theme),
                 onClick = { navController.navigate(Routes.ThemeSettings) }
             )
-
             SettingItem(
                 icon = Icons.Default.TextFields,
                 title = stringResource(R.string.font_size),
                 onClick = { navController.navigate(Routes.FontSizeSettings) }
             )
-
             SettingItem(
                 icon = Icons.Default.Language,
                 title = stringResource(R.string.language),
