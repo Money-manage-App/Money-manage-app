@@ -8,7 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.money_manage_app.MyApp
-import com.example.money_manage_app.data.local.datastore.ThemePreference
+import com.example.money_manage_app.data.repository.CategoryRepository
 import com.example.money_manage_app.data.repository.UserRepository
 
 import com.example.money_manage_app.features.ui.screens.home.HomeScreen
@@ -29,6 +29,7 @@ import com.example.money_manage_app.features.ui.screens.settings.settings.Curren
 
 // Import màn hình chi tiết giao dịch
 import com.example.money_manage_app.features.ui.screens.history.TransactionDetailScreen
+import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModelFactory
 
@@ -43,7 +44,10 @@ fun NavGraph(
     val userViewModel = UserViewModelFactory(userRepository)
         .create(UserViewModel::class.java)
     val context = LocalContext.current
-    val themePreference = remember { ThemePreference(context) }
+
+    val categoryRepository = remember { CategoryRepository(MyApp.db.categoryDao()) }
+    val categoryViewModel = remember { CategoryViewModel(categoryRepository) }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -80,9 +84,9 @@ fun NavGraph(
         composable(Routes.FontSizeSettings) { FontSizeScreen(navController) }
 
         // Thêm 2 màn hình mới
-        composable(Routes.CategorySettings) { CategorySettingScreen(navController) }
-        composable(Routes.AddExpenseCategory) { AddExpenseCategoryScreen(navController) }
-        composable(Routes.AddIncomeCategory) { AddIncomeCategoryScreen(navController) }
+        composable(Routes.CategorySettings) { CategorySettingScreen(navController,categoryViewModel) }
+        composable(Routes.AddExpenseCategory) { AddExpenseCategoryScreen(navController,categoryViewModel) }
+        composable(Routes.AddIncomeCategory) { AddIncomeCategoryScreen(navController,categoryViewModel) }
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
 
         composable(Routes.AddTransaction) {

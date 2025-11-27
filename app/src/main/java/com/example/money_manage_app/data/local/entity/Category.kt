@@ -1,11 +1,8 @@
 package com.example.money_manage_app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.ColumnInfo
-import androidx.room.TypeConverters
-import androidx.room.Ignore
-import androidx.compose.ui.graphics.vector.ImageVector
 
 @Entity(tableName = "category")
 data class CategoryEntity(
@@ -19,11 +16,17 @@ data class CategoryEntity(
     val nameEn: String,
 
     @ColumnInfo(name = "icon_name")
-    val iconName: String, // Lưu tên icon để mapping khi load
+    val iconName: String,
 
     @ColumnInfo(name = "is_expense")
-    val isExpense: Boolean = true,
+    val isExpense: Boolean,
 
     @ColumnInfo(name = "is_active")
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+
+    @ColumnInfo(name = "name_note")
+    val nameNote: String? = null,
+
+    @ColumnInfo(name = "display_order")
+    val displayOrder: Int = 0  // Thêm field này
 )

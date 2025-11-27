@@ -72,6 +72,8 @@
     <!-- Category Screen -->
     <string name="add_category">Add Category</string>
     <string name="setting_category">Setting Category</string>
+    <string name="enter_category_name">Enter category name</string>
+    <string name="select_icon">Select Icon</string>
 
     <!-- Font Size Screen-->
     <string name="adjust_font_size">Adjust font size</string>

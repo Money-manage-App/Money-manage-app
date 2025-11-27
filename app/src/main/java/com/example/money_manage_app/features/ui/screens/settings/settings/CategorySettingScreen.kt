@@ -1,6 +1,5 @@
 package com.example.money_manage_app.features.ui.screens.settings.settings
 
-import com.example.money_manage_app.features.navigation.Routes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -15,114 +14,63 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.money_manage_app.data.local.datastore.*
-import kotlinx.coroutines.launch
 import com.example.money_manage_app.R
-
-data class CategoryItem(val icon: ImageVector, val name: String, val iconName: String)
+import com.example.money_manage_app.data.local.datastore.FontSizeManager
+import com.example.money_manage_app.data.local.datastore.ThemePreference
+import com.example.money_manage_app.features.navigation.Routes
+import com.example.money_manage_app.features.viewmodel.CategoryViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategorySettingScreen(navController: NavHostController) {
+fun CategorySettingScreen(
+    navController: NavHostController,
+    categoryViewModel: CategoryViewModel
+) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val currentLanguage = configuration.locales.get(0)?.language ?: "en"
     val scope = rememberCoroutineScope()
-    val categoryPreference = remember { CategoryPreference(context) }
 
+    // Theme & Font managers
     val themePref = remember { ThemePreference(context) }
     val fontManager = remember { FontSizeManager(context) }
-
     val isDark by themePref.isDarkMode.collectAsState(initial = false)
     val fontScale by fontManager.fontSizeFlow.collectAsState(initial = 1f)
     val colors = MaterialTheme.colorScheme
 
+    // Tab state
     var selectedTab by remember { mutableStateOf(0) }
-    var expenseCategories by remember { mutableStateOf<List<CategoryItem>>(emptyList()) }
-    var incomeCategories by remember { mutableStateOf<List<CategoryItem>>(emptyList()) }
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffset by remember { mutableStateOf(0f) }
 
-    // Danh mục mặc định
-    val defaultExpenseCategories = listOf(
-        CategoryItem(Icons.Default.ShoppingCart, "Mua sắm", "ShoppingCart"),
-        CategoryItem(Icons.Default.SportsEsports, "Giải trí", "SportsEsports"),
-        CategoryItem(Icons.Default.Checkroom, "Quần áo", "Checkroom"),
-        CategoryItem(Icons.Default.Pets, "Thú cưng", "Pets"),
-        CategoryItem(Icons.Default.Restaurant, "Đồ ăn", "Restaurant"),
-        CategoryItem(Icons.Default.SportsSoccer, "Thể thao", "SportsSoccer"),
-        CategoryItem(Icons.Default.Favorite, "Sức khỏe", "Favorite"),
-        CategoryItem(Icons.Default.Build, "Sửa chữa", "Build"),
-        CategoryItem(Icons.Default.CardGiftcard, "Biếu tặng", "CardGiftcard")
-    )
+    // Categories from ViewModel (Room Database)
+    val expenseCategories by categoryViewModel.expenseCategories.collectAsState()
+    val incomeCategories by categoryViewModel.incomeCategories.collectAsState()
+    val currentCategories = if (selectedTab == 0) expenseCategories else incomeCategories
 
-    val defaultIncomeCategories = listOf(
-        CategoryItem(Icons.Default.Money, "Lương", "Money"),
-        CategoryItem(Icons.Default.Savings, "Khoản đầu tư", "Savings"),
-        CategoryItem(Icons.Default.Schedule, "Bán thời gian", "Schedule"),
-        CategoryItem(Icons.Default.MoreHoriz, "Khác", "MoreHoriz")
-    )
-
-    // Load dữ liệu từ DataStore
+    // Load categories on first launch
     LaunchedEffect(Unit) {
-        categoryPreference.categoriesFlow.collect { saved ->
-            expenseCategories = saved["expense"]?.map { data ->
-                val icon = getIconFromName(data.iconName)
-                CategoryItem(icon, data.name, data.iconName)
-            } ?: defaultExpenseCategories
-
-            incomeCategories = saved["income"]?.map { data ->
-                val icon = getIconFromName(data.iconName)
-                CategoryItem(icon, data.name, data.iconName)
-            } ?: defaultIncomeCategories
-        }
+        categoryViewModel.loadCategories()
     }
 
-    fun saveCategories() {
-        scope.launch {
-            val expenseData = expenseCategories.map { CategoryData(it.iconName, it.name) }
-            val incomeData = incomeCategories.map { CategoryData(it.iconName, it.name) }
-            val data = mapOf("expense" to expenseData, "income" to incomeData)
-            categoryPreference.save(data)
-        }
-    }
-
-    fun deleteCategory(index: Int) {
-        if (selectedTab == 0)
-            expenseCategories = expenseCategories.toMutableList().apply { removeAt(index) }
-        else
-            incomeCategories = incomeCategories.toMutableList().apply { removeAt(index) }
-
-        saveCategories()
-    }
-
+    // Move category function
     fun moveCategory(fromIndex: Int, toIndex: Int) {
         if (fromIndex == toIndex) return
-
-        if (selectedTab == 0) {
-            val list = expenseCategories.toMutableList()
-            val item = list.removeAt(fromIndex)
-            list.add(toIndex, item)
-            expenseCategories = list
-        } else {
-            val list = incomeCategories.toMutableList()
-            val item = list.removeAt(fromIndex)
-            list.add(toIndex, item)
-            incomeCategories = list
-        }
-        saveCategories()
+        categoryViewModel.reorderCategories(fromIndex, toIndex, selectedTab == 0)
     }
-
-    val currentCategories = if (selectedTab == 0) expenseCategories else incomeCategories
 
     Scaffold(
         topBar = {
@@ -156,7 +104,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-            // Custom Tab Switcher giống AddTransactionScreen
+            // Custom Tab Switcher (giống AddTransactionScreen)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -201,6 +149,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                 }
             }
 
+            // Category List
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,7 +158,7 @@ fun CategorySettingScreen(navController: NavHostController) {
             ) {
                 itemsIndexed(
                     items = currentCategories,
-                    key = { _, item -> "${item.iconName}-${item.name}" }
+                    key = { _, item -> item.id }
                 ) { index, category ->
                     val isBeingDragged = draggedIndex == index
 
@@ -236,7 +185,6 @@ fun CategorySettingScreen(navController: NavHostController) {
                                     isBeingDragged -> colors.surfaceVariant.copy(alpha = 0.8f)
                                     draggedIndex != null && index == targetIndex && index != draggedIndex ->
                                         colors.primary.copy(alpha = 0.2f)
-
                                     else -> Color.Transparent
                                 },
                                 RoundedCornerShape(8.dp)
@@ -249,7 +197,11 @@ fun CategorySettingScreen(navController: NavHostController) {
                             modifier = Modifier
                                 .size(32.dp)
                                 .background(Color(0xFFEF5350), CircleShape)
-                                .clickable { deleteCategory(index) },
+                                .clickable {
+                                    scope.launch {
+                                        categoryViewModel.deleteCategory(category)
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -262,22 +214,28 @@ fun CategorySettingScreen(navController: NavHostController) {
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // Icon + Tên
+                        // Icon category
                         Icon(
-                            category.icon,
-                            contentDescription = category.name,
+                            getIconFromName(category.iconName),
+                            contentDescription = category.nameNote
+                                ?: category.nameEn
+                                ?: category.nameVi,
                             tint = colors.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
+
                         Spacer(modifier = Modifier.width(12.dp))
+
+                        // Tên category (hiển thị theo ngôn ngữ)
                         Text(
-                            category.name,
+                            text = category.nameNote ?: if (currentLanguage == "vi")
+                                category.nameVi else category.nameEn,
                             color = colors.onSurface,
                             fontSize = (16.sp * fontScale),
                             modifier = Modifier.weight(1f)
                         )
 
-                        // Nút kéo (3 gạch)
+                        // Nút kéo (3 gạch menu)
                         Icon(
                             Icons.Default.Menu,
                             contentDescription = "Kéo để sắp xếp",
@@ -320,6 +278,7 @@ fun CategorySettingScreen(navController: NavHostController) {
                     }
                 }
 
+                // Nút thêm danh mục
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
@@ -345,7 +304,10 @@ fun CategorySettingScreen(navController: NavHostController) {
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.add_category), fontSize = (16.sp * fontScale))
+                        Text(
+                            stringResource(R.string.add_category),
+                            fontSize = (16.sp * fontScale)
+                        )
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -388,7 +350,7 @@ fun TabButton(
     }
 }
 
-// Helper function
+// Helper function để map icon name -> ImageVector
 fun getIconFromName(iconName: String): ImageVector {
     return when (iconName) {
         // Chi tiêu
@@ -410,6 +372,7 @@ fun getIconFromName(iconName: String): ImageVector {
         "Security" -> Icons.Default.Security
         "Home" -> Icons.Default.Home
         "Receipt" -> Icons.Default.Receipt
+        "Favorite" -> Icons.Default.Favorite
 
         // Thu nhập
         "AttachMoney" -> Icons.Default.AttachMoney
@@ -419,7 +382,6 @@ fun getIconFromName(iconName: String): ImageVector {
         "Savings" -> Icons.Default.Savings
         "TrendingUp" -> Icons.Default.TrendingUp
         "MilitaryTech" -> Icons.Default.MilitaryTech
-        "Favorite" -> Icons.Default.Favorite
         "AutoAwesome" -> Icons.Default.AutoAwesome
         "Money" -> Icons.Default.Money
         "Schedule" -> Icons.Default.Schedule

@@ -13,20 +13,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.money_manage_app.data.local.datastore.*
+import com.example.money_manage_app.R
+import com.example.money_manage_app.data.local.datastore.FontSizeManager
+import com.example.money_manage_app.data.local.datastore.LanguagePreference
+import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddIncomeCategoryScreen(navController: NavHostController) {
+fun AddIncomeCategoryScreen(
+    navController: NavHostController,
+    categoryViewModel: CategoryViewModel
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val categoryPref = remember { CategoryPreference(context) }
     val langPref = remember { LanguagePreference(context) }
     val fontSizeManager = remember { FontSizeManager(context) }
 
@@ -47,7 +52,10 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
         Icons.Default.TrendingUp to "TrendingUp",
         Icons.Default.MilitaryTech to "MilitaryTech",
         Icons.Default.Favorite to "Favorite",
-        Icons.Default.AutoAwesome to "AutoAwesome"
+        Icons.Default.AutoAwesome to "AutoAwesome",
+        Icons.Default.Money to "Money",
+        Icons.Default.Schedule to "Schedule",
+        Icons.Default.MoreHoriz to "MoreHoriz"
     )
 
     val titleText = if (language == "English") "Add Income Category" else "Thêm danh mục thu nhập"
@@ -66,22 +74,40 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = colors.onPrimary)
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colors.onPrimary
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        if (name.isNotBlank()) {
-                            scope.launch {
-                                categoryPref.saveNewCategory("income", CategoryData(selectedIconName, name))
-                                navController.popBackStack()
+                    IconButton(
+                        onClick = {
+                            if (name.isNotBlank()) {
+                                scope.launch {
+                                    // ✅ SỬ DỤNG CategoryViewModel thay vì DataStore
+                                    categoryViewModel.addCategory(
+                                        name = name,
+                                        iconName = selectedIconName,
+                                        isExpense = false,
+                                        nameNote = name // Lưu tên người dùng nhập vào nameNote
+                                    )
+                                    navController.popBackStack()
+                                }
                             }
                         }
-                    }) {
-                        Icon(Icons.Default.Check, contentDescription = "Save", tint = colors.onPrimary)
+                    ) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Save",
+                            tint = colors.onPrimary
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = colors.primary)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = colors.primary
+                )
             )
         },
         containerColor = colors.background
@@ -96,16 +122,26 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                placeholder = { Text(placeholderText, fontSize = 14.sp * fontScale) },
-                modifier = Modifier.fillMaxWidth()
+                placeholder = {
+                    Text(placeholderText, fontSize = 14.sp * fontScale)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colors.primary,
+                    unfocusedBorderColor = colors.outline
+                )
             )
 
             Spacer(Modifier.height(24.dp))
 
-            Text(iconTitleText, fontSize = 18.sp * fontScale, color = colors.onSurface)
+            Text(
+                iconTitleText,
+                fontSize = 18.sp * fontScale,
+                color = colors.onSurface
+            )
             Spacer(Modifier.height(16.dp))
 
-            // Grille d'icônes comme dans AddTransactionScreen
+            // Grid icons
             Column(modifier = Modifier.fillMaxWidth()) {
                 iconList.chunked(4).forEach { rowIcons ->
                     Row(
@@ -113,7 +149,7 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         rowIcons.forEach { (icon, iconName) ->
-                            IconGridItem(
+                            IncomeIconItem(
                                 icon = icon,
                                 iconName = iconName,
                                 isSelected = selectedIconName == iconName,
@@ -121,7 +157,6 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                        // Remplir les espaces vides
                         repeat(4 - rowIcons.size) {
                             Spacer(modifier = Modifier.weight(1f))
                         }
@@ -134,7 +169,7 @@ fun AddIncomeCategoryScreen(navController: NavHostController) {
 }
 
 @Composable
-fun IconGridItem(
+fun IncomeIconItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     iconName: String,
     isSelected: Boolean,
@@ -168,6 +203,5 @@ fun IconGridItem(
                 modifier = Modifier.size(28.dp)
             )
         }
-
     }
 }

@@ -71,6 +71,8 @@
     <!-- Category Screen -->
     <string name="add_category">Thêm danh mục</string>
     <string name="setting_category">Cài đặt danh mục</string>
+    <string name="enter_category_name">Nhập tên danh mục</string>
+    <string name="select_icon">Chọn biểu tượng</string>
 
     <!-- Font Size Screen-->
     <string name="adjust_font_size">Điều chỉnh cỡ chữ</string>

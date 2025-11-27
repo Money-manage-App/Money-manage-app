@@ -13,19 +13,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.money_manage_app.data.local.datastore.*
+import com.example.money_manage_app.R
+import com.example.money_manage_app.data.local.datastore.FontSizeManager
+import com.example.money_manage_app.data.local.datastore.LanguagePreference
+import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddExpenseCategoryScreen(navController: NavHostController) {
+fun AddExpenseCategoryScreen(
+    navController: NavHostController,
+    categoryViewModel: CategoryViewModel
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val categoryPref = remember { CategoryPreference(context) }
     val langPref = remember { LanguagePreference(context) }
     val fontSizeManager = remember { FontSizeManager(context) }
 
@@ -72,22 +78,40 @@ fun AddExpenseCategoryScreen(navController: NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = colors.onPrimary)
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colors.onPrimary
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        if (name.isNotBlank()) {
-                            scope.launch {
-                                categoryPref.saveNewCategory("expense", CategoryData(selectedIconName, name))
-                                navController.popBackStack()
+                    IconButton(
+                        onClick = {
+                            if (name.isNotBlank()) {
+                                scope.launch {
+                                    // ✅ SỬ DỤNG CategoryViewModel thay vì DataStore
+                                    categoryViewModel.addCategory(
+                                        name = name,
+                                        iconName = selectedIconName,
+                                        isExpense = true,
+                                        nameNote = name // Lưu tên người dùng nhập vào nameNote
+                                    )
+                                    navController.popBackStack()
+                                }
                             }
                         }
-                    }) {
-                        Icon(Icons.Default.Check, contentDescription = "Save", tint = colors.onPrimary)
+                    ) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Save",
+                            tint = colors.onPrimary
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = colors.primary)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = colors.primary
+                )
             )
         },
         containerColor = colors.background
@@ -102,16 +126,26 @@ fun AddExpenseCategoryScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                placeholder = { Text(placeholderText, fontSize = 14.sp * fontScale) },
-                modifier = Modifier.fillMaxWidth()
+                placeholder = {
+                    Text(placeholderText, fontSize = 14.sp * fontScale)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colors.primary,
+                    unfocusedBorderColor = colors.outline
+                )
             )
 
             Spacer(Modifier.height(24.dp))
 
-            Text(iconTitleText, fontSize = 18.sp * fontScale, color = colors.onSurface)
+            Text(
+                iconTitleText,
+                fontSize = 18.sp * fontScale,
+                color = colors.onSurface
+            )
             Spacer(Modifier.height(16.dp))
 
-            // Grille d'icônes
+            // Grid icons
             Column(modifier = Modifier.fillMaxWidth()) {
                 iconList.chunked(4).forEach { rowIcons ->
                     Row(
