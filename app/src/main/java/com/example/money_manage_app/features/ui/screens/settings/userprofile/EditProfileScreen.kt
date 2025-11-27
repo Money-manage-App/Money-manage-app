@@ -27,6 +27,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.money_manage_app.R
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+
 // EditProfileScreen.kt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +39,6 @@ fun EditProfileScreen(
 ) {
     val user by userViewModel.getUser(userId).collectAsState(initial = null)
     val colors = MaterialTheme.colorScheme
-
     val auth = FirebaseAuth.getInstance()
     val isGoogleAccount = auth.currentUser?.providerData?.any { it.providerId == "google.com" } == true
 
@@ -46,6 +47,12 @@ fun EditProfileScreen(
     var phone by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf<Boolean?>(null) }
     var photo by remember { mutableStateOf("") }
+
+    // Regex kiểm tra số điện thoại hợp lệ
+    val phoneRegex = Regex("^0\\d{9}\$")
+
+    // Snackbar để hiển thị lỗi khi lưu
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(user) {
         user?.let {
@@ -62,21 +69,34 @@ fun EditProfileScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.edit_profile_title),color = Color.Black) },
+                title = { Text(stringResource(R.string.edit_profile_title), color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back",tint = Color.Black )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
                 },
                 actions = {
+                    val scope = rememberCoroutineScope()
+
                     IconButton(onClick = {
+                        if (!phoneRegex.matches(phone)) {
+                            // Sử dụng CoroutineScope để hiển thị Snackbar
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    "Số điện thoại phải bắt đầu bằng 0 và có 10 chữ số"
+                                )
+                            }
+                            return@IconButton
+                        }
+
                         user?.let {
                             val updated = it.copy(
                                 name = name,
                                 email = if (isGoogleAccount) it.email else email.ifEmpty { null },
-                                phone = phone.ifEmpty { null },
+                                phone = phone,
                                 gender = gender,
                                 photo = photo
                             )
@@ -84,8 +104,9 @@ fun EditProfileScreen(
                             navController.popBackStack()
                         }
                     }) {
-                        Icon(Icons.Default.Check, contentDescription = "Save",tint = Color.Black )
+                        Icon(Icons.Default.Check, contentDescription = "Save", tint = Color.Black)
                     }
+
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color(0xFFFEE912)
@@ -131,11 +152,13 @@ fun EditProfileScreen(
                     }
                 }
             }
+
             Spacer(Modifier.height(24.dp))
+
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = {Text(stringResource(R.string.full_name)) },
+                label = { Text(stringResource(R.string.full_name)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
             Spacer(Modifier.height(12.dp))
@@ -149,10 +172,11 @@ fun EditProfileScreen(
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = phone,
-                onValueChange = { phone = it },
+                onValueChange = { phone = it }, // Cho phép nhập tự do
                 label = { Text(stringResource(R.string.phone_number)) },
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
+
             Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

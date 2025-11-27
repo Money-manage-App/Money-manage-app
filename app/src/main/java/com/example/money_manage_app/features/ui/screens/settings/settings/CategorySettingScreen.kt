@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,11 +30,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.FontSizeManager
+import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.features.navigation.Routes
 import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,50 +46,40 @@ fun CategorySettingScreen(
     userViewModel: UserViewModel
 ) {
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
-    val currentLanguage = configuration.locales.get(0)?.language ?: "en"
+    val density = LocalDensity.current
     val scope = rememberCoroutineScope()
 
-    // Theme & Font managers
+    // Theme & Font
     val themePref = remember { ThemePreference(context) }
     val fontManager = remember { FontSizeManager(context) }
     val isDark by themePref.isDarkMode.collectAsState(initial = false)
     val fontScale by fontManager.fontSizeFlow.collectAsState(initial = 1f)
     val colors = MaterialTheme.colorScheme
 
-    // Tab state
+    // Tab
     var selectedTab by remember { mutableStateOf(0) }
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffset by remember { mutableStateOf(0f) }
 
-    // ✅ Lấy userId từ UserViewModel
+    // UserId
     val currentUserId by userViewModel.currentUserId.collectAsState()
+    LaunchedEffect(Unit) { userViewModel.loadCurrentUser(context) }
 
-    // ✅ Load userId khi màn hình khởi tạo
-    LaunchedEffect(Unit) {
-        userViewModel.loadCurrentUser(context)
-    }
+    // Language preference (dynamic)
+    val languagePref = remember { LanguagePreference(context) }
+    val currentLanguage by languagePref.currentLanguage.collectAsState(initial = "Tiếng Việt")
+    val isEnglish = currentLanguage == "English"
 
-    // ✅ Cập nhật categoryViewModel khi userId thay đổi
-    LaunchedEffect(Unit) {
-        if (currentUserId.isNotEmpty()) {
-            categoryViewModel.loadCategories()
-        }
-    }
-
-    // ✅ Categories from ViewModel - TỰ ĐỘNG cập nhật khi có thay đổi
+    // Categories
     val expenseCategories by categoryViewModel.expenseCategories.collectAsState()
     val incomeCategories by categoryViewModel.incomeCategories.collectAsState()
     val currentCategories = if (selectedTab == 0) expenseCategories else incomeCategories
 
-    // ✅ Reload categories khi quay lại màn hình này
-    LaunchedEffect(navController.currentBackStackEntry) {
-        if (currentUserId.isNotEmpty()) {
-            categoryViewModel.loadCategories()
-        }
+    // Reload categories when userId changes
+    LaunchedEffect(currentUserId) {
+        if (currentUserId.isNotEmpty()) categoryViewModel.loadCategories()
     }
 
-    // Move category function
     fun moveCategory(fromIndex: Int, toIndex: Int) {
         if (fromIndex == toIndex) return
         categoryViewModel.reorderCategories(fromIndex, toIndex, selectedTab == 0)
@@ -99,21 +92,15 @@ fun CategorySettingScreen(
                     Text(
                         text = stringResource(R.string.setting_category),
                         color = Color.Black,
-                        style = typography.titleMedium.copy(fontSize = 20.sp)
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp)
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = colors.onPrimary
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = colors.onPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colors.primary
-                )
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = colors.primary)
             )
         },
         containerColor = colors.background
@@ -124,55 +111,26 @@ fun CategorySettingScreen(
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-            // ✅ Debug info (có thể xóa sau khi test)
-            Text(
-                text = "Current User: $currentUserId | Categories: ${currentCategories.size}",
-                fontSize = 10.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(8.dp)
-            )
-
-            // Custom Tab Switcher
-            Box(
+            // Tab Switcher
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 12.dp, bottom = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp)
-                        .background(
-                            if (isDark) Color(0xFF2C2C2C) else Color(0xFFE8E8E8),
-                            RoundedCornerShape(6.dp)
-                        )
-                ) {}
-
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    TabButton(
-                        text = stringResource(R.string.expense),
-                        isSelected = selectedTab == 0,
-                        onClick = {
-                            selectedTab = 0
-                            draggedIndex = null
-                            dragOffset = 0f
-                        },
-                        isDark = isDark,
-                        modifier = Modifier.weight(1f)
-                    )
-                    TabButton(
-                        text = stringResource(R.string.income),
-                        isSelected = selectedTab == 1,
-                        onClick = {
-                            selectedTab = 1
-                            draggedIndex = null
-                            dragOffset = 0f
-                        },
-                        isDark = isDark,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                TabButton(
+                    text = stringResource(R.string.expense),
+                    isSelected = selectedTab == 0,
+                    onClick = { selectedTab = 0; draggedIndex = null; dragOffset = 0f },
+                    isDark = isDark,
+                    modifier = Modifier.weight(1f)
+                )
+                TabButton(
+                    text = stringResource(R.string.income),
+                    isSelected = selectedTab == 1,
+                    onClick = { selectedTab = 1; draggedIndex = null; dragOffset = 0f },
+                    isDark = isDark,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             // Category List
@@ -187,21 +145,18 @@ fun CategorySettingScreen(
                     key = { _, item -> item.id }
                 ) { index, category ->
                     val isBeingDragged = draggedIndex == index
-
                     val targetIndex = if (isBeingDragged && dragOffset != 0f) {
-                        val itemHeight = 60f
-                        val offset = (dragOffset / itemHeight).toInt()
+                        val itemHeight = with(density) { 60.dp.toPx() }
+                        val offset = (dragOffset / itemHeight).roundToInt()
                         (index + offset).coerceIn(0, currentCategories.size - 1)
-                    } else {
-                        index
-                    }
+                    } else index
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
                             .graphicsLayer {
-                                shadowElevation = if (isBeingDragged) 12.dp.toPx() else 0f
+                                shadowElevation = if (isBeingDragged) 12f else 0f
                                 alpha = if (isBeingDragged) 0.9f else 1f
                                 translationY = if (isBeingDragged) dragOffset else 0f
                             }
@@ -210,6 +165,7 @@ fun CategorySettingScreen(
                                     isBeingDragged -> colors.surfaceVariant.copy(alpha = 0.8f)
                                     draggedIndex != null && index == targetIndex && index != draggedIndex ->
                                         colors.primary.copy(alpha = 0.2f)
+
                                     else -> Color.Transparent
                                 },
                                 RoundedCornerShape(8.dp)
@@ -217,58 +173,44 @@ fun CategorySettingScreen(
                             .padding(horizontal = 8.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Nút xóa
+                        // Delete button
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
                                 .background(Color(0xFFEF5350), CircleShape)
-                                .clickable {
-                                    scope.launch {
-                                        categoryViewModel.deleteCategory(category)
-                                    }
-                                },
+                                .clickable { scope.launch { categoryViewModel.deleteCategory(category) } },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.Default.Remove,
-                                contentDescription = "Delete",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Icon(Icons.Default.Remove, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(20.dp))
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // Icon category
+                        // Icon
                         Icon(
                             getIconFromName(category.iconName),
-                            contentDescription = category.nameNote
-                                ?: category.nameEn
-                                ?: category.nameVi,
+                            contentDescription = category.nameNote ?: category.nameEn ?: category.nameVi,
                             tint = colors.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // Tên category
+                        // ✅ FIX: Hiển thị tên category đúng theo ngôn ngữ
+                        val displayName = when {
+                            !category.nameNote.isNullOrBlank() -> category.nameNote
+                            isEnglish -> category.nameEn
+                            else -> category.nameVi
+                        }
+
                         Text(
-                            text = category.nameNote ?: if (currentLanguage == "vi")
-                                category.nameVi else category.nameEn,
+                            text = displayName,
                             color = colors.onSurface,
                             fontSize = (16.sp * fontScale),
                             modifier = Modifier.weight(1f)
                         )
 
-                        // ✅ Hiển thị userId của category (debug)
-                        Text(
-                            text = "(${category.userId})",
-                            fontSize = 8.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-
-                        // Nút kéo
+                        // Drag handle
                         Icon(
                             Icons.Default.Menu,
                             contentDescription = "Kéo để sắp xếp",
@@ -277,30 +219,18 @@ fun CategorySettingScreen(
                                 .size(28.dp)
                                 .pointerInput(currentCategories.size) {
                                     detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            draggedIndex = index
-                                            dragOffset = 0f
-                                        },
+                                        onDragStart = { draggedIndex = index; dragOffset = 0f },
                                         onDragEnd = {
-                                            val from = draggedIndex
-                                            if (from != null) {
-                                                val itemHeight = 60f
-                                                val offset = (dragOffset / itemHeight).toInt()
-                                                val to = (from + offset).coerceIn(
-                                                    0,
-                                                    currentCategories.size - 1
-                                                )
-                                                if (from != to) {
-                                                    moveCategory(from, to)
-                                                }
+                                            draggedIndex?.let { from ->
+                                                val itemHeight = with(density) { 60.dp.toPx() }
+                                                val offset = (dragOffset / itemHeight).roundToInt()
+                                                val to = (from + offset).coerceIn(0, currentCategories.size - 1)
+                                                if (from != to) moveCategory(from, to)
                                             }
                                             draggedIndex = null
                                             dragOffset = 0f
                                         },
-                                        onDragCancel = {
-                                            draggedIndex = null
-                                            dragOffset = 0f
-                                        },
+                                        onDragCancel = { draggedIndex = null; dragOffset = 0f },
                                         onDrag = { change, dragAmount ->
                                             change.consume()
                                             dragOffset += dragAmount.y
@@ -311,36 +241,24 @@ fun CategorySettingScreen(
                     }
                 }
 
-                // Nút thêm danh mục
+                // Add category button
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
-                            if (selectedTab == 0)
-                                navController.navigate(Routes.AddExpenseCategory)
-                            else
-                                navController.navigate(Routes.AddIncomeCategory)
+                            if (selectedTab == 0) navController.navigate(Routes.AddExpenseCategory)
+                            else navController.navigate(Routes.AddIncomeCategory)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
                             .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.primary,
-                            contentColor = colors.onPrimary
-                        ),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.add_category),
-                            fontSize = (16.sp * fontScale)
-                        )
+                        Text(stringResource(R.string.add_category), fontSize = (16.sp * fontScale))
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -348,6 +266,7 @@ fun CategorySettingScreen(
         }
     }
 }
+
 
 @Composable
 fun TabButton(
@@ -362,24 +281,15 @@ fun TabButton(
             .height(44.dp)
             .padding(4.dp)
             .then(
-                if (isSelected) {
-                    Modifier.background(
-                        if (isDark) Color(0xFF1E1E1E) else Color.White,
-                        RoundedCornerShape(4.dp)
-                    )
-                } else {
-                    Modifier
-                }
+                if (isSelected) Modifier.background(
+                    if (isDark) Color(0xFF1E1E1E) else Color.White,
+                    RoundedCornerShape(4.dp)
+                ) else Modifier
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            color = if (isDark) Color.White else Color.Black,
-            fontWeight = FontWeight.Normal
-        )
+        Text(text = text, fontSize = 14.sp, color = if (isDark) Color.White else Color.Black, fontWeight = FontWeight.Normal)
     }
 }
 
