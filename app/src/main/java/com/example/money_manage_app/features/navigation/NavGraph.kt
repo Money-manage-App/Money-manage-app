@@ -27,7 +27,6 @@ import com.example.money_manage_app.features.ui.screens.settings.settings.AddExp
 import com.example.money_manage_app.features.ui.screens.settings.settings.AddIncomeCategoryScreen
 import com.example.money_manage_app.features.ui.screens.settings.settings.CurrencySettingScreen
 
-// Import màn hình chi tiết giao dịch
 import com.example.money_manage_app.features.ui.screens.history.TransactionDetailScreen
 import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
@@ -40,11 +39,15 @@ fun NavGraph(
     startAtSettings: Boolean = false
 ) {
     val startDestination = if (startAtSettings) Routes.Settings else Routes.Home
-    val userRepository = UserRepository(MyApp.db.userDao())
-    val userViewModel = UserViewModelFactory(userRepository)
-        .create(UserViewModel::class.java)
     val context = LocalContext.current
 
+    // ✅ Tạo UserRepository và UserViewModel 1 LẦN duy nhất
+    val userRepository = remember { UserRepository(MyApp.db.userDao()) }
+    val userViewModel = remember {
+        UserViewModelFactory(userRepository).create(UserViewModel::class.java)
+    }
+
+    // ✅ Tạo CategoryRepository và CategoryViewModel 1 LẦN duy nhất
     val categoryRepository = remember { CategoryRepository(MyApp.db.categoryDao()) }
     val categoryViewModel = remember { CategoryViewModel(categoryRepository) }
 
@@ -57,42 +60,47 @@ fun NavGraph(
         composable(Routes.History) { HistoryScreen(navController) }
         composable(Routes.Add) { AddScreen(navController) }
         composable(Routes.Report) { ReportScreen(navController) }
-        composable(Routes.Profile) { ProfileScreen(navController, userViewModel) }
+        composable(Routes.Profile) { ProfileScreen(navController, userViewModel,categoryViewModel) }
         composable(Routes.Settings) { SettingsScreen(navController) }
 
         // Hồ sơ người dùng
         composable("${Routes.UserProfile}/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: "guest"
-            val userRepository = UserRepository(MyApp.db.userDao())
-            val viewModel = UserViewModelFactory(userRepository).create(UserViewModel::class.java)
-            UserProfileScreen(navController, userId, viewModel)
+            UserProfileScreen(navController, userId, userViewModel)
         }
 
         composable("${Routes.EditProfile}/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: "guest"
-            val userRepository = UserRepository(MyApp.db.userDao())
-            val viewModel = UserViewModelFactory(userRepository).create(UserViewModel::class.java)
-            EditProfileScreen(navController, userId, viewModel)
+            EditProfileScreen(navController, userId, userViewModel)
         }
-
-
-
 
         // Cài đặt
         composable(Routes.ThemeSettings) { ThemeSettingScreen(navController) }
         composable(Routes.LanguageSettings) { LanguageSettingScreen(navController) }
         composable(Routes.FontSizeSettings) { FontSizeScreen(navController) }
 
-        // Thêm 2 màn hình mới
-        composable(Routes.CategorySettings) { CategorySettingScreen(navController,categoryViewModel) }
-        composable(Routes.AddExpenseCategory) { AddExpenseCategoryScreen(navController,categoryViewModel) }
-        composable(Routes.AddIncomeCategory) { AddIncomeCategoryScreen(navController,categoryViewModel) }
+        // ✅ Category Settings - Truyền đúng 2 ViewModels
+        composable(Routes.CategorySettings) {
+            CategorySettingScreen(
+                navController = navController,
+                categoryViewModel = categoryViewModel,
+                userViewModel = userViewModel // ✅ Truyền userViewModel thay vì userRepository
+            )
+        }
+
+        composable(Routes.AddExpenseCategory) {
+            AddExpenseCategoryScreen(navController, categoryViewModel)
+        }
+
+        composable(Routes.AddIncomeCategory) {
+            AddIncomeCategoryScreen(navController, categoryViewModel)
+        }
+
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
 
         composable(Routes.AddTransaction) {
-            AddTransactionScreen(
-            navController = navController,
-        ) }
+            AddTransactionScreen(navController = navController)
+        }
 
         // ✅ Route xem chi tiết giao dịch
         composable("${Routes.TransactionDetail}/{id}") { backStackEntry ->
@@ -121,6 +129,5 @@ object Routes {
     const val AddIncomeCategory = "add_income_category"
     const val CurrencySettings = "currency_settings"
 
-    // ➕ Route mới
     const val TransactionDetail = "detail"
 }

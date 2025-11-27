@@ -3,11 +3,18 @@ package com.example.money_manage_app.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
-@Entity(tableName = "category")
+@Entity(
+    tableName = "category",
+    indices = [Index(value = ["user_id", "is_expense", "display_order"])]
+)
 data class CategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+
+    @ColumnInfo(name = "user_id")
+    val userId: String = "guest", // ✅ THÊM default value để tránh lỗi migration
 
     @ColumnInfo(name = "name_vi")
     val nameVi: String,
@@ -28,5 +35,5 @@ data class CategoryEntity(
     val nameNote: String? = null,
 
     @ColumnInfo(name = "display_order")
-    val displayOrder: Int = 0  // Thêm field này
+    val displayOrder: Int = 0
 )

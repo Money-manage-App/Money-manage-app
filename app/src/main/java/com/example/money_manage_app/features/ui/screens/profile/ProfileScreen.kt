@@ -1,4 +1,3 @@
-// ProfileScreen.kt
 package com.example.money_manage_app.features.ui.screens.profile
 
 import android.app.Activity
@@ -6,6 +5,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,7 +13,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Logout
@@ -28,12 +27,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.entity.User
+import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -42,12 +43,13 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
-import androidx.compose.ui.res.stringResource
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
-    userViewModel: UserViewModel
+    userViewModel: UserViewModel,
+    categoryViewModel: CategoryViewModel
 ) {
     val context = LocalContext.current
     val systemUiController = rememberSystemUiController()
@@ -64,23 +66,27 @@ fun ProfileScreen(
     val auth = FirebaseAuth.getInstance()
     val currentUserId = auth.currentUser?.uid ?: "guest"
 
-    // State user Room
-    val userState = remember { mutableStateOf<User?>(null) }
+    /** ⭕ Load categories cho user */
+    LaunchedEffect(currentUserId) {
+        categoryViewModel.setUserId(currentUserId)
+    }
 
-    // Observe Room user
+    /** USER STATE (ROOM) */
+    val userState = remember { mutableStateOf<User?>(null) }
     LaunchedEffect(currentUserId) {
         userViewModel.getUser(currentUserId).collect { user ->
             userState.value = user
         }
     }
 
-    // Google Sign-In
+    /** GOOGLE SIGN-IN */
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken("670135857127-7l1sc670mf6vr4edtfo0kud4uk5dctj8.apps.googleusercontent.com")
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
     val activity = context as Activity
+
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -93,10 +99,10 @@ fun ProfileScreen(
                     val firebaseUser = auth.currentUser
                     firebaseUser?.let { fu ->
                         scope.launch {
-                            val existingUser = userViewModel.getUserOnce(fu.uid)
-                            val newUser = existingUser?.copy(
-                                email = fu.email ?: existingUser.email,
-                                photo = existingUser.photo ?: fu.photoUrl?.toString()
+                            val existing = userViewModel.getUserOnce(fu.uid)
+                            val newUser = existing?.copy(
+                                email = fu.email ?: existing.email,
+                                photo = existing.photo ?: fu.photoUrl?.toString()
                             ) ?: User(
                                 userId = fu.uid,
                                 name = fu.displayName ?: "",
@@ -109,6 +115,8 @@ fun ProfileScreen(
                             )
                             userViewModel.saveUser(newUser)
                             userState.value = newUser
+                            // Reload categories cho user Google
+                            categoryViewModel.setUserId(fu.uid)
                         }
                     }
                 } else {
@@ -120,12 +128,15 @@ fun ProfileScreen(
         }
     }
 
+    /** UI */
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colorScheme.background)
     ) {
-        // Header vàng
+
+        /** HEADER */
+        /** HEADER */
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -133,8 +144,12 @@ fun ProfileScreen(
                 .background(brandYellow)
                 .padding(vertical = 32.dp, horizontal = 20.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                val user = userState.value
+            val user = userState.value
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Avatar
                 if (user?.photo != null) {
                     Image(
                         painter = rememberAsyncImagePainter(user.photo),
@@ -146,7 +161,7 @@ fun ProfileScreen(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        Icons.Default.Settings,
                         contentDescription = null,
                         modifier = Modifier
                             .size(80.dp)
@@ -156,7 +171,10 @@ fun ProfileScreen(
                         tint = textColor
                     )
                 }
+
                 Spacer(modifier = Modifier.height(12.dp))
+
+                // Tên + Email / Login Button
                 Crossfade(targetState = user != null) { loggedIn ->
                     if (loggedIn && user != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -180,35 +198,39 @@ fun ProfileScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_google_logo),
-                                contentDescription = "Google",
+                                contentDescription = "",
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 stringResource(R.string.login_email),
-                                color = Color.Black,
-                                style = MaterialTheme.typography.bodySmall
+                                color = Color.Black
                             )
                         }
                     }
                 }
             }
         }
+
+
         Spacer(modifier = Modifier.height(20.dp))
-        // Options
+
+        /** OPTION ITEMS */
         if (userState.value != null) {
             ProfileCardItem(
                 icon = Icons.Default.Logout,
-                title= stringResource(R.string.logout),
+                title = stringResource(R.string.logout),
                 onClick = {
                     auth.signOut()
-                    googleSignInClient.signOut()
-                    userState.value = null
+                    googleSignInClient.signOut().addOnCompleteListener {
+                        userState.value = null
+                    }
                 },
                 brandYellow = brandYellow,
                 colorScheme = colorScheme
             )
         }
+
         ProfileCardItem(
             icon = Icons.Default.Settings,
             title = stringResource(R.string.settings_title),
@@ -242,10 +264,7 @@ fun ProfileCardItem(
         ) {
             Icon(icon, contentDescription = null, tint = brandYellow)
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge.copy(color = colorScheme.onSurface)
-            )
+            Text(text = title, color = colorScheme.onSurface)
             Spacer(modifier = Modifier.weight(1f))
             Icon(Icons.Default.ArrowForward, contentDescription = null, tint = colorScheme.onSurfaceVariant)
         }

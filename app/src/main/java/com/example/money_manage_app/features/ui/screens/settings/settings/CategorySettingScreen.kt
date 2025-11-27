@@ -1,5 +1,6 @@
 package com.example.money_manage_app.features.ui.screens.settings.settings
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -31,13 +32,15 @@ import com.example.money_manage_app.data.local.datastore.FontSizeManager
 import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.features.navigation.Routes
 import com.example.money_manage_app.features.viewmodel.CategoryViewModel
+import com.example.money_manage_app.features.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategorySettingScreen(
     navController: NavHostController,
-    categoryViewModel: CategoryViewModel
+    categoryViewModel: CategoryViewModel,
+    userViewModel: UserViewModel
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -56,14 +59,31 @@ fun CategorySettingScreen(
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffset by remember { mutableStateOf(0f) }
 
-    // Categories from ViewModel (Room Database)
+    // ✅ Lấy userId từ UserViewModel
+    val currentUserId by userViewModel.currentUserId.collectAsState()
+
+    // ✅ Load userId khi màn hình khởi tạo
+    LaunchedEffect(Unit) {
+        userViewModel.loadCurrentUser(context)
+    }
+
+    // ✅ Cập nhật categoryViewModel khi userId thay đổi
+    LaunchedEffect(Unit) {
+        if (currentUserId.isNotEmpty()) {
+            categoryViewModel.loadCategories()
+        }
+    }
+
+    // ✅ Categories from ViewModel - TỰ ĐỘNG cập nhật khi có thay đổi
     val expenseCategories by categoryViewModel.expenseCategories.collectAsState()
     val incomeCategories by categoryViewModel.incomeCategories.collectAsState()
     val currentCategories = if (selectedTab == 0) expenseCategories else incomeCategories
 
-    // Load categories on first launch
-    LaunchedEffect(Unit) {
-        categoryViewModel.loadCategories()
+    // ✅ Reload categories khi quay lại màn hình này
+    LaunchedEffect(navController.currentBackStackEntry) {
+        if (currentUserId.isNotEmpty()) {
+            categoryViewModel.loadCategories()
+        }
     }
 
     // Move category function
@@ -104,14 +124,21 @@ fun CategorySettingScreen(
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-            // Custom Tab Switcher (giống AddTransactionScreen)
+            // ✅ Debug info (có thể xóa sau khi test)
+            Text(
+                text = "Current User: $currentUserId | Categories: ${currentCategories.size}",
+                fontSize = 10.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(8.dp)
+            )
+
+            // Custom Tab Switcher
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(top = 12.dp, bottom = 16.dp)
             ) {
-                // Background xám/tối tùy theme
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -122,7 +149,6 @@ fun CategorySettingScreen(
                         )
                 ) {}
 
-                // Các nút tab
                 Row(modifier = Modifier.fillMaxWidth()) {
                     TabButton(
                         text = stringResource(R.string.expense),
@@ -162,7 +188,6 @@ fun CategorySettingScreen(
                 ) { index, category ->
                     val isBeingDragged = draggedIndex == index
 
-                    // Tính vị trí đích
                     val targetIndex = if (isBeingDragged && dragOffset != 0f) {
                         val itemHeight = 60f
                         val offset = (dragOffset / itemHeight).toInt()
@@ -226,7 +251,7 @@ fun CategorySettingScreen(
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // Tên category (hiển thị theo ngôn ngữ)
+                        // Tên category
                         Text(
                             text = category.nameNote ?: if (currentLanguage == "vi")
                                 category.nameVi else category.nameEn,
@@ -235,7 +260,15 @@ fun CategorySettingScreen(
                             modifier = Modifier.weight(1f)
                         )
 
-                        // Nút kéo (3 gạch menu)
+                        // ✅ Hiển thị userId của category (debug)
+                        Text(
+                            text = "(${category.userId})",
+                            fontSize = 8.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+
+                        // Nút kéo
                         Icon(
                             Icons.Default.Menu,
                             contentDescription = "Kéo để sắp xếp",
@@ -350,10 +383,8 @@ fun TabButton(
     }
 }
 
-// Helper function để map icon name -> ImageVector
 fun getIconFromName(iconName: String): ImageVector {
     return when (iconName) {
-        // Chi tiêu
         "Restaurant" -> Icons.Default.Restaurant
         "LocalBar" -> Icons.Default.LocalBar
         "Flight" -> Icons.Default.Flight
@@ -373,8 +404,6 @@ fun getIconFromName(iconName: String): ImageVector {
         "Home" -> Icons.Default.Home
         "Receipt" -> Icons.Default.Receipt
         "Favorite" -> Icons.Default.Favorite
-
-        // Thu nhập
         "AttachMoney" -> Icons.Default.AttachMoney
         "Work" -> Icons.Default.Work
         "Star" -> Icons.Default.Star
@@ -386,8 +415,6 @@ fun getIconFromName(iconName: String): ImageVector {
         "Money" -> Icons.Default.Money
         "Schedule" -> Icons.Default.Schedule
         "MoreHoriz" -> Icons.Default.MoreHoriz
-
-        // Dự phòng
         else -> Icons.Default.Category
     }
 }
