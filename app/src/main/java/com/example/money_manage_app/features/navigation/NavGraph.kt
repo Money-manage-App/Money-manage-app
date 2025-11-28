@@ -99,7 +99,7 @@ fun NavGraph(
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
 
         composable(Routes.AddTransaction) {
-            AddTransactionScreen(navController = navController)
+            AddTransactionScreen(navController, categoryViewModel,userViewModel )
         }
 
         // ✅ Route xem chi tiết giao dịch

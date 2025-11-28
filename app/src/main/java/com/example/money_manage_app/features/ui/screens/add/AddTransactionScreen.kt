@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,47 +31,90 @@ import androidx.navigation.NavHostController
 import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.datastore.ThemePreference
 import com.example.money_manage_app.data.local.datastore.FontSizeManager
+import com.example.money_manage_app.data.local.datastore.LanguagePreference
+import com.example.money_manage_app.data.local.entity.CategoryEntity
+import com.example.money_manage_app.features.viewmodel.CategoryViewModel
+import com.example.money_manage_app.features.viewmodel.UserViewModel
 
-data class Category(
-    val name: String,
-    val icon: ImageVector,
-    val isExpense: Boolean = true
-)
+// Helper function để lấy icon từ tên
+fun getIconFromName(iconName: String): ImageVector {
+    return when (iconName) {
+        "Restaurant" -> Icons.Default.Restaurant
+        "LocalBar" -> Icons.Default.LocalBar
+        "Flight" -> Icons.Default.Flight
+        "Movie" -> Icons.Default.Movie
+        "ShoppingCart" -> Icons.Default.ShoppingCart
+        "LocalGasStation" -> Icons.Default.LocalGasStation
+        "FitnessCenter" -> Icons.Default.FitnessCenter
+        "SportsSoccer" -> Icons.Default.SportsSoccer
+        "EmojiFoodBeverage" -> Icons.Default.EmojiFoodBeverage
+        "Checkroom" -> Icons.Default.Checkroom
+        "Pets" -> Icons.Default.Pets
+        "Build" -> Icons.Default.Build
+        "CardGiftcard" -> Icons.Default.CardGiftcard
+        "SportsEsports" -> Icons.Default.SportsEsports
+        "DirectionsCar" -> Icons.Default.DirectionsCar
+        "Security" -> Icons.Default.Security
+        "Home" -> Icons.Default.Home
+        "Receipt" -> Icons.Default.Receipt
+        "Favorite" -> Icons.Default.Favorite
+        "AttachMoney" -> Icons.Default.AttachMoney
+        "Work" -> Icons.Default.Work
+        "Star" -> Icons.Default.Star
+        "AccountBalance" -> Icons.Default.AccountBalance
+        "Savings" -> Icons.Default.Savings
+        "TrendingUp" -> Icons.Default.TrendingUp
+        "MilitaryTech" -> Icons.Default.MilitaryTech
+        "AutoAwesome" -> Icons.Default.AutoAwesome
+        "Money" -> Icons.Default.Money
+        "Schedule" -> Icons.Default.Schedule
+        "MoreHoriz" -> Icons.Default.MoreHoriz
+        "CheckCircle" -> Icons.Default.CheckCircle
+        else -> Icons.Default.Category
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTransactionScreen(navController: NavHostController) {
+fun AddTransactionScreen(
+    navController: NavHostController,
+    categoryViewModel: CategoryViewModel,
+    userViewModel: UserViewModel
+) {
     val context = LocalContext.current
     val themePref = remember { ThemePreference(context) }
     val fontManager = remember { FontSizeManager(context) }
+    val languagePref = remember { LanguagePreference(context) }
 
     val isDark by themePref.isDarkMode.collectAsState(initial = false)
     val fontScale by fontManager.fontSizeFlow.collectAsState(initial = 1f)
+    val currentLanguage by languagePref.currentLanguage.collectAsState(initial = "Tiếng Việt")
     val colors = MaterialTheme.colorScheme
 
+    // ✅ Load userId và categories
+    val currentUserId by userViewModel.currentUserId.collectAsState()
+    val expenseCategories by categoryViewModel.expenseCategories.collectAsState()
+    val incomeCategories by categoryViewModel.incomeCategories.collectAsState()
+    val isLoading by categoryViewModel.isLoading.collectAsState()
+
     var selectedTab by remember { mutableStateOf(0) }
-    var selectedCategory by remember { mutableStateOf<Category?>(null) }
+    var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
     var showInputDialog by remember { mutableStateOf(false) }
 
-    val expenseCategories = listOf(
-        Category("Ăn uống", Icons.Default.ShoppingCart),
-        Category("Đi lại", Icons.Default.DirectionsCar),
-        Category("Quần áo", Icons.Default.CheckCircle),
-        Category("Tạp hóa", Icons.Default.Home),
-        Category("Hóa đơn", Icons.Default.Receipt),
-        Category("Thể thao", Icons.Default.FitnessCenter),
-        Category("Sức khỏe", Icons.Default.Favorite),
-        Category("Sửa chữa", Icons.Default.Build),
-        Category("Bảo hiểm", Icons.Default.Security)
-    )
+    val isEnglish = currentLanguage == "English"
 
-    val incomeCategories = listOf(
-        Category("Lương", Icons.Default.AccountBalance, false),
-        Category("Khoản tiết kiệm", Icons.Default.Savings, false),
-        Category("Tiền lãi", Icons.Default.TrendingUp, false),
-        Category("Khác", Icons.Default.MoreHoriz, false)
-    )
+    // ✅ Load user và categories khi màn hình khởi động
+    LaunchedEffect(Unit) {
+        userViewModel.loadCurrentUser(context)
+    }
 
+    LaunchedEffect(currentUserId) {
+        if (currentUserId.isNotEmpty()) {
+            categoryViewModel.setUserId(currentUserId)
+        }
+    }
+
+    // ✅ Lấy danh sách categories theo tab
     val categories = if (selectedTab == 0) expenseCategories else incomeCategories
 
     if (showInputDialog && selectedCategory != null) {
@@ -76,11 +122,13 @@ fun AddTransactionScreen(navController: NavHostController) {
             category = selectedCategory!!,
             isDark = isDark,
             fontScale = fontScale,
+            isEnglish = isEnglish,
             onDismiss = {
                 showInputDialog = false
                 selectedCategory = null
             },
             onConfirm = { amount, note ->
+                // TODO: Lưu transaction vào database
                 showInputDialog = false
                 selectedCategory = null
                 navController.navigate("history") {
@@ -95,6 +143,7 @@ fun AddTransactionScreen(navController: NavHostController) {
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // Top Bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,6 +174,7 @@ fun AddTransactionScreen(navController: NavHostController) {
             }
         }
 
+        // Tab Switcher
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -161,33 +211,51 @@ fun AddTransactionScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            categories.chunked(4).forEach { rowCategories ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    rowCategories.forEach { category ->
-                        CategoryItem(
-                            category = category,
-                            isSelected = false,
-                            isDark = isDark,
-                            onClick = {
-                                selectedCategory = category
-                                showInputDialog = true
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    repeat(4 - rowCategories.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+        // ✅ Hiển thị loading hoặc categories
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = colors.primary)
+            }
+        } else if (categories.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isEnglish) "No categories available" else "Không có danh mục",
+                    color = colors.onSurface.copy(alpha = 0.6f),
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            // ✅ Grid categories động từ database
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                items(categories) { category ->
+                    CategoryItem(
+                        category = category,
+                        isSelected = false,
+                        isDark = isDark,
+                        isEnglish = isEnglish,
+                        onClick = {
+                            selectedCategory = category
+                            showInputDialog = true
+                        }
+                    )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -196,9 +264,10 @@ fun AddTransactionScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionInputDialog(
-    category: Category,
+    category: CategoryEntity,
     isDark: Boolean,
     fontScale: Float,
+    isEnglish: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit
 ) {
@@ -220,6 +289,13 @@ fun TransactionInputDialog(
             val minute = selectedCalendar.get(java.util.Calendar.MINUTE)
             "${String.format("%02d", day)}/${String.format("%02d", month)}/$year ${String.format("%02d:%02d", hour, minute)}"
         }
+    }
+
+    // ✅ Lấy tên category đúng theo ngôn ngữ
+    val categoryDisplayName = when {
+        !category.nameNote.isNullOrBlank() -> category.nameNote
+        isEnglish -> category.nameEn
+        else -> category.nameVi
     }
 
     if (showDatePicker) {
@@ -245,7 +321,7 @@ fun TransactionInputDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel), color = if (isDark) Color.White else Color.Black)
+                    Text(if (isEnglish) "Cancel" else "Hủy", color = if (isDark) Color.White else Color.Black)
                 }
             },
             colors = DatePickerDefaults.colors(
@@ -283,7 +359,7 @@ fun TransactionInputDialog(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text(stringResource(R.string.select_time), color = if (isDark) Color.White else Color.Black) },
+            title = { Text(if (isEnglish) "Select time" else "Chọn giờ", color = if (isDark) Color.White else Color.Black) },
             containerColor = if (isDark) Color.Black else Color.White,
             text = {
                 TimePicker(
@@ -311,7 +387,7 @@ fun TransactionInputDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text(stringResource(R.string.cancel), color = Color.Gray)
+                    Text(if (isEnglish) "Cancel" else "Hủy", color = Color.Gray)
                 }
             }
         )
@@ -339,15 +415,15 @@ fun TransactionInputDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = category.icon,
-                            contentDescription = category.name,
+                            imageVector = getIconFromName(category.iconName),
+                            contentDescription = categoryDisplayName,
                             tint = Color.Black,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = category.name,
+                        text = categoryDisplayName,
                         fontSize = (18.sp * fontScale),
                         fontWeight = FontWeight.Bold,
                         color = if (isDark) Color.White else Color.Black
@@ -394,7 +470,7 @@ fun TransactionInputDialog(
                     value = amount,
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Số tiền", color = if (isDark) Color.White else Color.Black) },
+                    label = { Text(if (isEnglish) "Amount" else "Số tiền", color = if (isDark) Color.White else Color.Black) },
                     placeholder = { Text("0") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
@@ -416,8 +492,8 @@ fun TransactionInputDialog(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Ghi chú", color = if (isDark) Color.White else Color.Black) },
-                    placeholder = { Text("Nhập ghi chú...") },
+                    label = { Text(if (isEnglish) "Note" else "Ghi chú", color = if (isDark) Color.White else Color.Black) },
+                    placeholder = { Text(if (isEnglish) "Enter note..." else "Nhập ghi chú...") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFFFD600),
                         unfocusedBorderColor = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0),
@@ -435,7 +511,7 @@ fun TransactionInputDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.cancel), color = Color.Gray)
+                        Text(if (isEnglish) "Cancel" else "Hủy", color = Color.Gray)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -444,7 +520,7 @@ fun TransactionInputDialog(
                             containerColor = Color(0xFFFFD600)
                         )
                     ) {
-                        Text(stringResource(R.string.confirm), color = Color.Black)
+                        Text(if (isEnglish) "Confirm" else "Xác nhận", color = Color.Black)
                     }
                 }
             }
@@ -488,12 +564,20 @@ fun TabButton(
 
 @Composable
 fun CategoryItem(
-    category: Category,
+    category: CategoryEntity,
     isSelected: Boolean,
     isDark: Boolean,
+    isEnglish: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // ✅ Hiển thị tên category đúng theo ngôn ngữ
+    val displayName = when {
+        !category.nameNote.isNullOrBlank() -> category.nameNote
+        isEnglish -> category.nameEn
+        else -> category.nameVi
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.clickable(onClick = onClick)
@@ -513,15 +597,15 @@ fun CategoryItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = category.icon,
-                contentDescription = category.name,
+                imageVector = getIconFromName(category.iconName),
+                contentDescription = displayName,
                 tint = if (isDark) Color.White else Color.Black,
                 modifier = Modifier.size(24.dp)
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = category.name,
+            text = displayName,
             fontSize = 11.sp,
             color = if (isDark) Color.White else Color.Black,
             textAlign = TextAlign.Center,
