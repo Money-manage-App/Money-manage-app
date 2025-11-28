@@ -33,28 +33,27 @@ fun AddScreen(navController: NavHostController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(colors.primary) // Thay Color(0xFFFEE912)
+                    .background(colors.primary)
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = colors.onPrimary, // Thay Color.Black
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { navController.popBackStack() }
-                    )
-                    Spacer(modifier = Modifier.width(100.dp))
-                    Text(
-                        text = stringResource(R.string.note_transaction),
-                        color = colors.onPrimary, // Thay Color.Black
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp)
-                    )
-                }
+                // Nút Back (align trái)
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = colors.onPrimary,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterStart)
+                        .clickable { navController.popBackStack() }
+                )
+
+                // Title đặt giữa
+                Text(
+                    text = stringResource(R.string.note_transaction),
+                    color = colors.onPrimary,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
 
             // Content area với text
