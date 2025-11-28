@@ -162,12 +162,17 @@ fun TransactionDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        if (isEnglish) "Detail" else "Chi tiết",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black,
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            if (isEnglish) "Detail" else "Chi tiết",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black,
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -194,15 +199,18 @@ fun TransactionDetailScreen(
                         Text(
                             if (isEnglish) "Edit" else "Sửa",
                             fontSize = 18.sp,
-                            color = Color(0xFF2196F3)
                         )
                     }
-                    Text("|", color = Color.Gray, fontSize = 18.sp)
+                    Divider(
+                        modifier = Modifier
+                            .height(50.dp)
+                            .width(1.dp),
+                        color = Color.Gray
+                    )
                     TextButton(onClick = { showDeleteDialog = true }) {
                         Text(
                             if (isEnglish) "Delete" else "Xóa",
                             fontSize = 18.sp,
-                            color = Color.Red
                         )
                     }
                 }
@@ -211,32 +219,35 @@ fun TransactionDetailScreen(
         containerColor = backgroundColor
     ) { padding ->
 
+
         Column(
             modifier = Modifier
                 .padding(padding)
                 .padding(20.dp)
                 .fillMaxSize()
         ) {
-
+            Spacer(Modifier.height(20.dp))
             // --- Icon và tiêu đề ---
-            Row(verticalAlignment = Alignment.CenterVertically) {
-
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Box(
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(70.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFFF8E1)),
+                        .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = getIconFromName(category.iconName),
                         contentDescription = null,
-                        tint = if (transaction.isIncome) Color(0xFFFFC107) else Color(0xFF2196F3),
-                        modifier = Modifier.size(28.dp)
+                        tint =  Color(0xFFFFC107) ,
+                        modifier = Modifier.size(65.dp)
                     )
                 }
 
-                Spacer(Modifier.width(16.dp))
+                Spacer(Modifier.height(15.dp))
 
                 Text(
                     text = categoryName,
@@ -246,36 +257,47 @@ fun TransactionDetailScreen(
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(15.dp))
 
             // ---- Các dòng thông tin ----
-            DetailRow(
-                label = if (isEnglish) "Type" else "Kiểu",
-                value = if (transaction.isIncome) {
-                    if (isEnglish) "Income" else "Thu nhập"
-                } else {
-                    if (isEnglish) "Expense" else "Chi tiêu"
-                },
-                textColor = textColor
-            )
 
-            DetailRow(
-                label = if (isEnglish) "Amount" else "Số tiền",
-                value = "%,d đ".format(transaction.amount.toInt()),
-                textColor = textColor
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 30.dp) // Thụt lề vào 2 bên
+            ) {
+                DetailRow(
+                    label = if (isEnglish) "Type" else "Kiểu",
+                    value = if (transaction.isIncome) {
+                        if (isEnglish) "Income" else "Thu nhập"
+                    } else {
+                        if (isEnglish) "Expense" else "Chi tiêu"
+                    },
+                    textColor = textColor
+                )
 
-            DetailRow(
-                label = if (isEnglish) "Date & Time" else "Thời gian",
-                value = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(transaction.date)),
-                textColor = textColor
-            )
+                DetailRow(
+                    label = if (isEnglish) "Amount" else "Số tiền",
+                    value = "%,d đ".format(transaction.amount.toInt()),
+                    textColor = textColor
+                )
 
-            DetailRow(
-                label = if (isEnglish) "Note" else "Ghi chú",
-                value = transaction.note.ifEmpty { if (isEnglish) "No note" else "Không có ghi chú" },
-                textColor = textColor
-            )
+                DetailRow(
+                    label = if (isEnglish) "Date & Time" else "Thời gian",
+                    value = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(
+                        Date(
+                            transaction.date
+                        )
+                    ),
+                    textColor = textColor
+                )
+
+                DetailRow(
+                    label = if (isEnglish) "Note" else "Ghi chú",
+                    value = transaction.note.ifEmpty { if (isEnglish) "No note" else "Không có ghi chú" },
+                    textColor = textColor
+                )
+            }
         }
     }
 }

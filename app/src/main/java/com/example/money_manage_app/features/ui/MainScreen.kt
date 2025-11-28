@@ -58,7 +58,10 @@ fun MainScreen() {
                 Routes.AddTransaction,
                 Routes.CategorySettings,
                 Routes.AddExpenseCategory,
-                Routes.AddIncomeCategory
+                Routes.AddIncomeCategory,
+                Routes.TransactionDetail,
+                Routes.CurrencySettings,
+
             )
 
             val shouldShowBottomBar = hideBottomBarRoutesPrefixes.none { prefix ->

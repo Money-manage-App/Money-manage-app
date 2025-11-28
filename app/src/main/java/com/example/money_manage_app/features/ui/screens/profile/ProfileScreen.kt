@@ -214,7 +214,7 @@ fun ProfileScreen(
                         }
                     } else {
                         Text(
-                            text = "Guest User",
+                            text = stringResource(R.string.guest_user),
                             color = textColor,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                         )

@@ -214,12 +214,11 @@ fun HomeScreen(
                 Text(
                     text = String.format("%02d/%d", selectedMonth + 1, selectedYear),
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
                     color = textPrimaryColor
                 )
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // --- Hai ô Chi tiêu / Thu nhập ---
             if (isLoadingData) {
@@ -286,7 +285,7 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             // --- Ghi chú màu ---
             Column(

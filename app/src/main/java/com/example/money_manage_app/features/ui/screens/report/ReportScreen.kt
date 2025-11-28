@@ -212,7 +212,7 @@ fun ReportScreen(
                     // Tổng số dư
                     Text(
                         totalBalanceText,
-                        fontSize = (16.sp * fontScale),
+                        fontSize = (18.sp * fontScale),
                         fontWeight = FontWeight.SemiBold,
                         color = textPrimary
                     )
@@ -226,14 +226,14 @@ fun ReportScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // Chi tiêu
                         Column(
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
                                 .background(expenseBackground, RoundedCornerShape(20.dp))
                                 .padding(horizontal = 16.dp, vertical = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -262,12 +262,10 @@ fun ReportScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
-
                         // Thu nhập
                         Column(
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
                                 .background(incomeBackground, RoundedCornerShape(20.dp))
                                 .padding(horizontal = 16.dp, vertical = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally

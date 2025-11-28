@@ -351,6 +351,14 @@ fun TransactionItem(
         Color(0xFF2196F3) // Xanh cho chi tiêu
     }
 
+    Surface(
+        shape = RoundedCornerShape(10),
+        shadowElevation = 3.dp,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -364,6 +372,7 @@ fun TransactionItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
+            Spacer(modifier = Modifier.width(5.dp))
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -422,5 +431,7 @@ fun TransactionItem(
                 modifier = Modifier.padding(top = 2.dp)
             )
         }
+        Spacer(modifier = Modifier.width(5.dp))
     }
 }
+    }
