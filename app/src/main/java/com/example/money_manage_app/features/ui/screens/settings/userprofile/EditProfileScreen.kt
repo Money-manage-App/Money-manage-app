@@ -49,7 +49,8 @@ fun EditProfileScreen(
     var photo by remember { mutableStateOf("") }
 
     // Regex kiểm tra số điện thoại hợp lệ
-    val phoneRegex = Regex("^0\\d{9}\$")
+    val phoneRegex = Regex("^(0\\d{9})?$")
+
 
     // Snackbar để hiển thị lỗi khi lưu
     val snackbarHostState = remember { SnackbarHostState() }
