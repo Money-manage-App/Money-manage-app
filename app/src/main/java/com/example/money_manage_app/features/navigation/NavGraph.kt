@@ -62,7 +62,7 @@ fun NavGraph(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        composable(Routes.Home) { HomeScreen(navController) }
+        composable(Routes.Home) { HomeScreen(navController, transactionViewModel, userViewModel) }
 
         composable(Routes.History) {
             HistoryScreen(
@@ -73,7 +73,7 @@ fun NavGraph(
         }
 
         composable(Routes.Add) { AddScreen(navController) }
-        composable(Routes.Report) { ReportScreen(navController) }
+        composable(Routes.Report) { ReportScreen(navController, transactionViewModel, userViewModel) }
 
         composable(Routes.Profile) {
             ProfileScreen(navController, userViewModel, categoryViewModel,transactionViewModel = transactionViewModel)

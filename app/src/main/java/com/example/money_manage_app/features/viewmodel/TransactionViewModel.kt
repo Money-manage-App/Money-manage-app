@@ -232,4 +232,27 @@ class TransactionViewModel(
             0
         }
     }
+
+    /* Lấy tổng thu nhập trong khoảng thời gian
+    */
+    suspend fun getTotalIncome(userId: String, startDate: Long, endDate: Long): Double {
+        return try {
+            repository.getTotalIncome(userId, startDate, endDate)
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error getting total income", e)
+            0.0
+        }
+    }
+
+    /**
+     * Lấy tổng chi tiêu trong khoảng thời gian
+     */
+    suspend fun getTotalExpense(userId: String, startDate: Long, endDate: Long): Double {
+        return try {
+            repository.getTotalExpense(userId, startDate, endDate)
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error getting total expense", e)
+            0.0
+        }
+    }
 }

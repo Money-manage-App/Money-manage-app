@@ -166,7 +166,7 @@ fun TransactionDetailScreen(
                         if (isEnglish) "Detail" else "Chi tiết",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.Black
+                        color = Color.Black,
                     )
                 },
                 navigationIcon = {
