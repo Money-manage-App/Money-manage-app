@@ -1,5 +1,6 @@
 package com.example.money_manage_app.features.ui.screens.add
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,6 +36,10 @@ import com.example.money_manage_app.data.local.datastore.LanguagePreference
 import com.example.money_manage_app.data.local.entity.CategoryEntity
 import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
+import com.example.money_manage_app.features.viewmodel.TransactionViewModel
+import kotlinx.coroutines.launch
+
+private const val TAG = "AddTransaction"
 
 // Helper function để lấy icon từ tên
 fun getIconFromName(iconName: String): ImageVector {
@@ -79,9 +84,12 @@ fun getIconFromName(iconName: String): ImageVector {
 fun AddTransactionScreen(
     navController: NavHostController,
     categoryViewModel: CategoryViewModel,
-    userViewModel: UserViewModel
+    userViewModel: UserViewModel,
+    transactionViewModel: TransactionViewModel
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val themePref = remember { ThemePreference(context) }
     val fontManager = remember { FontSizeManager(context) }
     val languagePref = remember { LanguagePreference(context) }
@@ -100,17 +108,22 @@ fun AddTransactionScreen(
     var selectedTab by remember { mutableStateOf(0) }
     var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
     var showInputDialog by remember { mutableStateOf(false) }
+    var showSuccessMessage by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val isEnglish = currentLanguage == "English"
 
     // ✅ Load user và categories khi màn hình khởi động
     LaunchedEffect(Unit) {
+        Log.d(TAG, "Screen started, loading user...")
         userViewModel.loadCurrentUser(context)
     }
 
     LaunchedEffect(currentUserId) {
+        Log.d(TAG, "UserId changed: $currentUserId")
         if (currentUserId.isNotEmpty()) {
             categoryViewModel.setUserId(currentUserId)
+            transactionViewModel.setUserId(currentUserId)
         }
     }
 
@@ -127,134 +140,225 @@ fun AddTransactionScreen(
                 showInputDialog = false
                 selectedCategory = null
             },
-            onConfirm = { amount, note ->
-                // TODO: Lưu transaction vào database
-                showInputDialog = false
-                selectedCategory = null
-                navController.navigate("history") {
-                    popUpTo(0) { inclusive = true }
+            onConfirm = { amount, note, dateTimeMillis ->
+                scope.launch {
+                    // ✅ Lưu category trước khi đóng dialog
+                    val categoryToSave = selectedCategory!!
+
+                    Log.d(TAG, "=== STARTING TRANSACTION ===")
+                    Log.d(TAG, "UserId: $currentUserId")
+                    Log.d(TAG, "Category ID: ${categoryToSave.id}")
+                    Log.d(TAG, "Category Name: ${categoryToSave.nameVi}")
+                    Log.d(TAG, "Amount: $amount")
+                    Log.d(TAG, "Note: $note")
+                    Log.d(TAG, "Date: $dateTimeMillis")
+                    Log.d(TAG, "IsIncome: ${categoryToSave.isExpense.not()}")
+
+                    // Đóng dialog trước
+                    showInputDialog = false
+                    selectedCategory = null
+
+                    try {
+                        val amountValue = amount.toDoubleOrNull()
+                        if (amountValue == null || amountValue <= 0) {
+                            errorMessage = "Invalid amount"
+                            Log.e(TAG, "Invalid amount: $amount")
+                            return@launch
+                        }
+
+                        val success = transactionViewModel.addTransaction(
+                            categoryId = categoryToSave.id,
+                            amount = amountValue,
+                            note = note,
+                            date = dateTimeMillis,
+                            isIncome = categoryToSave.isExpense.not()
+                        )
+
+                        Log.d(TAG, "Transaction result: $success")
+
+                        if (success) {
+                            showSuccessMessage = true
+                            Log.d(TAG, "Showing success message, waiting 500ms...")
+                            kotlinx.coroutines.delay(500)
+                            showSuccessMessage = false
+
+                            Log.d(TAG, "Navigating to history...")
+                            navController.popBackStack() // Pop add_transaction -> back to add
+                            navController.popBackStack()
+                        } else {
+                            errorMessage = "Failed to add transaction"
+                            Log.e(TAG, "addTransaction returned false")
+                        }
+                    } catch (e: Exception) {
+                        errorMessage = e.message
+                        Log.e(TAG, "Error adding transaction", e)
+                    }
                 }
             }
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
-    ) {
-        // Top Bar
-        Box(
+    // ✅ Success/Error messages
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.primary)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .fillMaxSize()
+                .background(colors.background)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            // Top Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.primary)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.size(40.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = colors.onPrimary
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colors.onPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(120.dp))
+                    Text(
+                        text = stringResource(R.string.add),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onPrimary
                     )
                 }
-                Spacer(modifier = Modifier.width(120.dp))
-                Text(
-                    text = stringResource(R.string.add),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.onPrimary
-                )
             }
-        }
 
-        // Tab Switcher
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(top = 12.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .background(
-                        if (isDark) Color(0xFF2C2C2C) else Color(0xFFE8E8E8),
-                        RoundedCornerShape(6.dp)
-                    )
-            ) {}
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                TabButton(
-                    text = stringResource(R.string.expense),
-                    isSelected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    isDark = isDark,
-                    modifier = Modifier.weight(1f)
-                )
-                TabButton(
-                    text = stringResource(R.string.income),
-                    isSelected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    isDark = isDark,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ✅ Hiển thị loading hoặc categories
-        if (isLoading) {
+            // Tab Switcher
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 12.dp)
             ) {
-                CircularProgressIndicator(color = colors.primary)
-            }
-        } else if (categories.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if (isEnglish) "No categories available" else "Không có danh mục",
-                    color = colors.onSurface.copy(alpha = 0.6f),
-                    fontSize = 14.sp
-                )
-            }
-        } else {
-            // ✅ Grid categories động từ database
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryItem(
-                        category = category,
-                        isSelected = false,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .background(
+                            if (isDark) Color(0xFF2C2C2C) else Color(0xFFE8E8E8),
+                            RoundedCornerShape(6.dp)
+                        )
+                ) {}
+
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    TabButton(
+                        text = stringResource(R.string.expense),
+                        isSelected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
                         isDark = isDark,
-                        isEnglish = isEnglish,
-                        onClick = {
-                            selectedCategory = category
-                            showInputDialog = true
-                        }
+                        modifier = Modifier.weight(1f)
                     )
+                    TabButton(
+                        text = stringResource(R.string.income),
+                        isSelected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        isDark = isDark,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ✅ Hiển thị loading hoặc categories
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = colors.primary)
+                }
+            } else if (categories.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isEnglish) "No categories available" else "Không có danh mục",
+                        color = colors.onSurface.copy(alpha = 0.6f),
+                        fontSize = 14.sp
+                    )
+                }
+            } else {
+                // ✅ Grid categories động từ database
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(categories) { category ->
+                        CategoryItem(
+                            category = category,
+                            isSelected = false,
+                            isDark = isDark,
+                            isEnglish = isEnglish,
+                            onClick = {
+                                Log.d(TAG, "Category clicked: ${category.nameVi} (ID: ${category.id})")
+                                selectedCategory = category
+                                showInputDialog = true
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        // ✅ Success Snackbar overlay
+        if (showSuccessMessage) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Snackbar(
+                    containerColor = Color(0xFF4CAF50)
+                ) {
+                    Text(
+                        text = if (isEnglish) "Transaction added successfully!" else "Thêm giao dịch thành công!",
+                        color = Color.White
+                    )
+                }
+            }
+        }
+
+        // ✅ Error message
+        errorMessage?.let { msg ->
+            LaunchedEffect(msg) {
+                Log.e(TAG, "Error shown to user: $msg")
+                kotlinx.coroutines.delay(3000)
+                errorMessage = null
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Snackbar(
+                    containerColor = Color(0xFFE53935)
+                ) {
+                    Text(text = msg, color = Color.White)
                 }
             }
         }
@@ -269,9 +373,9 @@ fun TransactionInputDialog(
     fontScale: Float,
     isEnglish: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
+    onConfirm: (String, String, Long) -> Unit
 ) {
-    var amount by remember { mutableStateOf("0") }
+    var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -291,7 +395,6 @@ fun TransactionInputDialog(
         }
     }
 
-    // ✅ Lấy tên category đúng theo ngôn ngữ
     val categoryDisplayName = when {
         !category.nameNote.isNullOrBlank() -> category.nameNote
         isEnglish -> category.nameEn
@@ -515,10 +618,16 @@ fun TransactionInputDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
-                        onClick = { onConfirm(amount, note) },
+                        onClick = {
+                            if (amount.isNotBlank()) {
+                                Log.d(TAG, "Confirm clicked with amount: $amount, note: $note")
+                                onConfirm(amount, note, selectedCalendar.timeInMillis)
+                            }
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFFFD600)
-                        )
+                        ),
+                        enabled = amount.isNotBlank()
                     ) {
                         Text(if (isEnglish) "Confirm" else "Xác nhận", color = Color.Black)
                     }
@@ -571,7 +680,6 @@ fun CategoryItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // ✅ Hiển thị tên category đúng theo ngôn ngữ
     val displayName = when {
         !category.nameNote.isNullOrBlank() -> category.nameNote
         isEnglish -> category.nameEn

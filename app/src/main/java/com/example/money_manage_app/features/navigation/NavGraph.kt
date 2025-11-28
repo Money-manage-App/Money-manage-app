@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import com.example.money_manage_app.MyApp
 import com.example.money_manage_app.data.repository.CategoryRepository
 import com.example.money_manage_app.data.repository.UserRepository
+import com.example.money_manage_app.data.repository.TransactionRepository
 
 import com.example.money_manage_app.features.ui.screens.home.HomeScreen
 import com.example.money_manage_app.features.ui.screens.history.HistoryScreen
@@ -31,6 +32,7 @@ import com.example.money_manage_app.features.ui.screens.history.TransactionDetai
 import com.example.money_manage_app.features.viewmodel.CategoryViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModelFactory
+import com.example.money_manage_app.features.viewmodel.TransactionViewModel
 
 @Composable
 fun NavGraph(
@@ -51,16 +53,32 @@ fun NavGraph(
     val categoryRepository = remember { CategoryRepository(MyApp.db.categoryDao()) }
     val categoryViewModel = remember { CategoryViewModel(categoryRepository) }
 
+    // ✅ Tạo TransactionRepository và TransactionViewModel 1 LẦN duy nhất
+    val transactionRepository = remember { TransactionRepository(MyApp.db.transactionDao()) }
+    val transactionViewModel = remember { TransactionViewModel(transactionRepository) }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier
     ) {
         composable(Routes.Home) { HomeScreen(navController) }
-        composable(Routes.History) { HistoryScreen(navController) }
+
+        composable(Routes.History) {
+            HistoryScreen(
+                navController = navController,
+                transactionViewModel = transactionViewModel,
+                userViewModel = userViewModel
+            )
+        }
+
         composable(Routes.Add) { AddScreen(navController) }
         composable(Routes.Report) { ReportScreen(navController) }
-        composable(Routes.Profile) { ProfileScreen(navController, userViewModel,categoryViewModel) }
+
+        composable(Routes.Profile) {
+            ProfileScreen(navController, userViewModel, categoryViewModel)
+        }
+
         composable(Routes.Settings) { SettingsScreen(navController) }
 
         // Hồ sơ người dùng
@@ -79,12 +97,12 @@ fun NavGraph(
         composable(Routes.LanguageSettings) { LanguageSettingScreen(navController) }
         composable(Routes.FontSizeSettings) { FontSizeScreen(navController) }
 
-        // ✅ Category Settings - Truyền đúng 2 ViewModels
+        // ✅ Category Settings
         composable(Routes.CategorySettings) {
             CategorySettingScreen(
                 navController = navController,
                 categoryViewModel = categoryViewModel,
-                userViewModel = userViewModel // ✅ Truyền userViewModel thay vì userRepository
+                userViewModel = userViewModel
             )
         }
 
@@ -98,14 +116,24 @@ fun NavGraph(
 
         composable(Routes.CurrencySettings) { CurrencySettingScreen(navController) }
 
+        // ✅ Add Transaction
         composable(Routes.AddTransaction) {
-            AddTransactionScreen(navController, categoryViewModel,userViewModel )
+            AddTransactionScreen(
+                navController = navController,
+                categoryViewModel = categoryViewModel,
+                userViewModel = userViewModel,
+                transactionViewModel = transactionViewModel
+            )
         }
 
-        // ✅ Route xem chi tiết giao dịch
+        // ✅ Transaction Detail
         composable("${Routes.TransactionDetail}/{id}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toIntOrNull() ?: -1
-            TransactionDetailScreen(navController = navController, transactionId = id)
+            TransactionDetailScreen(
+                navController = navController,
+                transactionId = id,
+                transactionViewModel = transactionViewModel
+            )
         }
     }
 }

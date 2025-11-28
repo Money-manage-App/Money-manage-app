@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
-
 @Entity(
     tableName = "category",
     indices = [Index(value = ["user_id", "is_expense", "display_order"])]
@@ -14,7 +13,7 @@ data class CategoryEntity(
     val id: Int = 0,
 
     @ColumnInfo(name = "user_id")
-    val userId: String = "guest", // ✅ THÊM default value để tránh lỗi migration
+    val userId: String,   // ❗ BỎ default = "guest"
 
     @ColumnInfo(name = "name_vi")
     val nameVi: String,

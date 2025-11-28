@@ -1,11 +1,38 @@
 package com.example.money_manage_app.data.repository
 
+import android.util.Log
 import com.example.money_manage_app.data.local.database.dao.UserDao
 import com.example.money_manage_app.data.local.entity.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 
 class UserRepository(private val userDao: UserDao) {
+
+    // ✅ CRITICAL: Đảm bảo guest user tồn tại trong database
+    suspend fun ensureGuestUserExists() {
+        try {
+            val guestUser = userDao.getUser("guest").firstOrNull()
+            if (guestUser == null) {
+                val newGuestUser = User(
+                    userId = "guest",
+                    name = "Guest User",
+                    email = null,
+                    phone = null,
+                    gender = null,
+                    photo = null,
+                    isGuest = true,
+                    createdAt = System.currentTimeMillis()
+                )
+                userDao.insertUser(newGuestUser)
+                Log.d("UserRepository", "✅ Created guest user in database")
+            } else {
+                Log.d("UserRepository", "✅ Guest user already exists: ${guestUser.userId}")
+            }
+        } catch (e: Exception) {
+            Log.e("UserRepository", "❌ Error ensuring guest user", e)
+            throw e
+        }
+    }
 
     // Lấy user theo UID/email
     fun getUser(userId: String): Flow<User?> = userDao.getUser(userId)
@@ -45,7 +72,6 @@ class UserRepository(private val userDao: UserDao) {
     suspend fun deleteUser(userId: String) = userDao.deleteUser(userId)
 
     suspend fun getUserOnce(userId: String): User? {
-        return userDao.getUser(userId).firstOrNull() // Flow -> lấy 1 giá trị đầu tiên
+        return userDao.getUser(userId).firstOrNull()
     }
-
 }

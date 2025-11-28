@@ -18,7 +18,7 @@ class MyApp : Application() {
         db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
-            "money_app_db"
+            "money_manage_database"
         )
             .fallbackToDestructiveMigration()
             .build()

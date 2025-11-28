@@ -1,6 +1,7 @@
 package com.example.money_manage_app.features.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.money_manage_app.data.local.entity.User
@@ -14,48 +15,75 @@ class UserViewModel(
     private val repository: UserRepository
 ) : ViewModel() {
 
-    // ✅ Context sẽ được truyền qua các method thay vì constructor
-
-    // ✅ THÊM: Theo dõi userId hiện tại
     private val _currentUserId = MutableStateFlow<String>("guest")
     val currentUserId: StateFlow<String> = _currentUserId
 
-    // ✅ THÊM: Theo dõi user hiện tại
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
-    // ✅ Load userId từ SharedPreferences
+    // ✅ Load userId từ SharedPreferences VÀ đảm bảo guest user tồn tại
     fun loadCurrentUser(context: Context) {
         viewModelScope.launch {
-            val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-            val userId = prefs.getString("current_user_id", "guest") ?: "guest"
-            _currentUserId.value = userId
+            try {
+                Log.d("UserViewModel", "=== Loading Current User ===")
 
-            if (userId != "guest") {
-                _currentUser.value = repository.getUserOnce(userId)
-            } else {
-                _currentUser.value = null
+                // ✅ CRITICAL: Tạo guest user trước nếu chưa có
+                repository.ensureGuestUserExists()
+
+                val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                val userId = prefs.getString("current_user_id", "guest") ?: "guest"
+
+                Log.d("UserViewModel", "Loaded userId from prefs: '$userId'")
+                _currentUserId.value = userId
+
+                if (userId != "guest") {
+                    val user = repository.getUserOnce(userId)
+                    _currentUser.value = user
+                    Log.d("UserViewModel", "Loaded user: ${user?.name}")
+                } else {
+                    // Load guest user info
+                    val guestUser = repository.getUserOnce("guest")
+                    _currentUser.value = guestUser
+                    Log.d("UserViewModel", "Loaded guest user: ${guestUser?.userId}")
+                }
+
+                Log.d("UserViewModel", "✅ Current userId set to: '${_currentUserId.value}'")
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "❌ Error loading user", e)
             }
         }
     }
 
-    // ✅ THÊM: Đăng nhập (lưu userId)
+    // ✅ Đăng nhập (lưu userId)
     fun login(context: Context, userId: String) {
         viewModelScope.launch {
-            val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-            prefs.edit().putString("current_user_id", userId).apply()
-            _currentUserId.value = userId
-            _currentUser.value = repository.getUserOnce(userId)
+            try {
+                val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putString("current_user_id", userId).apply()
+                _currentUserId.value = userId
+                _currentUser.value = repository.getUserOnce(userId)
+                Log.d("UserViewModel", "✅ Logged in as: $userId")
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "❌ Error during login", e)
+            }
         }
     }
 
-    // ✅ THÊM: Đăng xuất
+    // ✅ Đăng xuất
     fun logout(context: Context) {
         viewModelScope.launch {
-            val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-            prefs.edit().putString("current_user_id", "guest").apply()
-            _currentUserId.value = "guest"
-            _currentUser.value = null
+            try {
+                // Ensure guest user exists before logout
+                repository.ensureGuestUserExists()
+
+                val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putString("current_user_id", "guest").apply()
+                _currentUserId.value = "guest"
+                _currentUser.value = repository.getUserOnce("guest")
+                Log.d("UserViewModel", "✅ Logged out, switched to guest")
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "❌ Error during logout", e)
+            }
         }
     }
 

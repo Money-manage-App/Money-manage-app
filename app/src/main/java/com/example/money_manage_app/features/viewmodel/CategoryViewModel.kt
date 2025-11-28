@@ -26,11 +26,8 @@ class CategoryViewModel(private val repository: CategoryRepository) : ViewModel(
     val error: StateFlow<String?> = _error
 
     private val loadMutex = Mutex()
-
-    // ✅ Lưu userId hiện tại
     private var currentUserId: String = ""
 
-    // ✅ Set userId và load categories
     fun setUserId(userId: String) {
         if (currentUserId != userId && userId.isNotEmpty()) {
             currentUserId = userId
@@ -49,24 +46,37 @@ class CategoryViewModel(private val repository: CategoryRepository) : ViewModel(
                 _error.value = null
 
                 try {
-                    // ✅ Kiểm tra user này đã có categories chưa
+                    // ✅ Fix categories with ID = 0 FIRST
+                    repository.fixCategoriesWithZeroId(currentUserId)
+
+                    // ✅ CRITICAL: Always reload from database after fix
+                    // This ensures UI has the correct IDs
                     val totalCount = repository.countCategories(currentUserId)
 
                     if (totalCount == 0) {
-                        // ✅ User mới → Tạo danh mục mẫu
+                        // New user → Create default categories
                         val defaultCategories = DefaultCategories.createDefaultCategoriesForUser(currentUserId)
                         repository.insertAll(defaultCategories)
-
-                        _expenseCategories.value = defaultCategories.filter { it.isExpense }
-                        _incomeCategories.value = defaultCategories.filter { !it.isExpense }
-                    } else {
-                        // ✅ User cũ → Load categories đã lưu
-                        _expenseCategories.value = repository.getExpenseCategories(currentUserId)
-                        _incomeCategories.value = repository.getIncomeCategories(currentUserId)
                     }
+
+                    // ✅ ALWAYS load fresh data from database
+                    // Never use cached or old category objects
+                    _expenseCategories.value = repository.getExpenseCategories(currentUserId)
+                    _incomeCategories.value = repository.getIncomeCategories(currentUserId)
+
+                    // ✅ DEBUG: Log category IDs to verify they're correct
+                    android.util.Log.d("CategoryViewModel", "Loaded ${_expenseCategories.value.size} expense categories")
+                    _expenseCategories.value.forEach {
+                        android.util.Log.d("CategoryViewModel", "  - ${it.nameVi}: ID=${it.id}")
+                    }
+                    android.util.Log.d("CategoryViewModel", "Loaded ${_incomeCategories.value.size} income categories")
+                    _incomeCategories.value.forEach {
+                        android.util.Log.d("CategoryViewModel", "  - ${it.nameVi}: ID=${it.id}")
+                    }
+
                 } catch (e: Exception) {
                     _error.value = "Không thể tải danh mục: ${e.message}"
-                    e.printStackTrace()
+                    android.util.Log.e("CategoryViewModel", "Error loading categories", e)
                 } finally {
                     _isLoading.value = false
                 }
@@ -93,7 +103,7 @@ class CategoryViewModel(private val repository: CategoryRepository) : ViewModel(
                     displayOrder = newDisplayOrder
                 )
                 repository.insertCategory(category)
-                loadCategories()
+                loadCategories() // Reload to get correct IDs
             } catch (e: Exception) {
                 _error.value = "Không thể thêm danh mục: ${e.message}"
                 e.printStackTrace()
@@ -106,7 +116,7 @@ class CategoryViewModel(private val repository: CategoryRepository) : ViewModel(
             try {
                 repository.deleteCategory(category)
 
-                // ✅ Reorder các categories còn lại
+                // Reorder remaining categories
                 val remainingCategories = if (category.isExpense) {
                     repository.getExpenseCategories(currentUserId)
                 } else {
@@ -171,7 +181,6 @@ class CategoryViewModel(private val repository: CategoryRepository) : ViewModel(
         _error.value = null
     }
 
-    // ✅ THÊM: Method để get active categories cho AddTransaction screen
     suspend fun getActiveCategories(isExpense: Boolean): List<CategoryEntity> {
         return if (currentUserId.isEmpty()) {
             emptyList()
