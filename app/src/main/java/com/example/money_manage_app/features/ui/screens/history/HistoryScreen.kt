@@ -66,38 +66,54 @@ fun HistoryScreen(
     val datePickerButtonColor = if (isDarkMode) Color.White else Color.Black
 
     // ✅ Load userId và transactions
+    // ✅ Load userId và transactions
     val currentUserId by userViewModel.currentUserId.collectAsState()
     val transactions by transactionViewModel.transactions.collectAsState()
     val isLoading by transactionViewModel.isLoading.collectAsState()
 
-    // ✅ Chỉ load user một lần khi màn hình khởi động
+// ✅ Load user một lần khi màn hình khởi động
     LaunchedEffect(Unit) {
+        android.util.Log.d("HistoryScreen", "🟢 Screen started, loading user...")
         userViewModel.loadCurrentUser(context)
     }
 
-    // ✅ Load transactions khi có userId (chỉ một lần)
+// ✅ CRITICAL: Load transactions MỖI KHI userId thay đổi
     LaunchedEffect(currentUserId) {
+        android.util.Log.d("HistoryScreen", "🔄 UserId changed to: $currentUserId")
         if (currentUserId.isNotEmpty()) {
             transactionViewModel.setUserId(currentUserId)
         }
     }
 
-    // Date picker state
+// ✅ DEBUG: Monitor transactions changes
+    LaunchedEffect(transactions.size, currentUserId) {
+        android.util.Log.d("HistoryScreen", "📊 User: $currentUserId, Total transactions: ${transactions.size}")
+        transactions.forEach { t ->
+            android.util.Log.d("HistoryScreen", "  - Trans #${t.transaction.id}: ${t.transaction.amount}đ on ${t.transaction.date}")
+        }
+    }
+
+// Date picker state
     val calendar = Calendar.getInstance()
     var selectedDate by remember { mutableStateOf(calendar.timeInMillis) }
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormatter = SimpleDateFormat("dd / MM / yyyy", Locale.getDefault())
 
-    // ✅ Filter transactions by selected date - sử dụng derivedStateOf để tránh recompose
+// ✅ Filter transactions - THÊM LOG
     val filteredTransactions by remember {
         derivedStateOf {
             val startOfDay = transactionViewModel.getStartOfDay(selectedDate)
             val endOfDay = transactionViewModel.getEndOfDay(selectedDate)
 
-            transactions.filter { transactionWithCategory ->
+            val filtered = transactions.filter { transactionWithCategory ->
                 val transactionDate = transactionWithCategory.transaction.date
                 transactionDate in startOfDay..endOfDay
             }
+
+            android.util.Log.d("HistoryScreen", "🔍 Date filter: ${dateFormatter.format(Date(selectedDate))}")
+            android.util.Log.d("HistoryScreen", "📦 Total: ${transactions.size}, Filtered: ${filtered.size}")
+
+            filtered
         }
     }
 
@@ -238,7 +254,7 @@ fun HistoryScreen(
                 ) {
                     items(
                         items = filteredTransactions,
-                        key = { it.transaction.id } // ✅ FIX: Sử dụng unique ID
+                        key = { "${currentUserId}_${it.transaction.id}" } // ✅ ĐÚNG - kết hợp userId + id
                     ) { transactionWithCategory ->
                         TransactionItem(
                             transactionWithCategory = transactionWithCategory,

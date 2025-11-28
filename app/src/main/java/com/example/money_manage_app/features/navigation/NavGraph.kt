@@ -76,7 +76,7 @@ fun NavGraph(
         composable(Routes.Report) { ReportScreen(navController) }
 
         composable(Routes.Profile) {
-            ProfileScreen(navController, userViewModel, categoryViewModel)
+            ProfileScreen(navController, userViewModel, categoryViewModel,transactionViewModel = transactionViewModel)
         }
 
         composable(Routes.Settings) { SettingsScreen(navController) }

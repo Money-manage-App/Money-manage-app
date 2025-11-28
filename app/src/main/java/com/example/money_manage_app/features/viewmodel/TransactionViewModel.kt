@@ -8,16 +8,19 @@ import com.example.money_manage_app.data.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import java.util.Calendar
+
+private const val TAG = "TransactionViewModel"
 
 class TransactionViewModel(
     private val repository: TransactionRepository
 ) : ViewModel() {
 
     private val _transactions = MutableStateFlow<List<TransactionWithCategory>>(emptyList())
-    val transactions: StateFlow<List<TransactionWithCategory>> = _transactions.asStateFlow()
+    val transactions: StateFlow<List<TransactionWithCategory>> = _transactions
 
     private val _selectedTransaction = MutableStateFlow<TransactionWithCategory?>(null)
     val selectedTransaction: StateFlow<TransactionWithCategory?> = _selectedTransaction
@@ -28,48 +31,67 @@ class TransactionViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private var currentUserId: String = ""
-    private var collectJob: Job? = null
+    // userId cho giao dịch
+    private val _currentUserId = MutableStateFlow("")
+    val currentUserId: StateFlow<String> = _currentUserId.asStateFlow()
 
-    // ✅ Set userId và bắt đầu observe transactions
+    private var observeJob: Job? = null
+
+
+    // ============================================================
+    // 🔥 FIX 1: KHÔNG BAO GIỜ XÓA TRANSACTIONS KHI SET USER
+    // 🔥 FIX 2: CHỈ START OBSERVE KHI USERID CÓ THẬT
+    // ============================================================
     fun setUserId(userId: String) {
-        if (currentUserId != userId && userId.isNotEmpty()) {
-            currentUserId = userId
-            observeTransactions()
-        }
+        if (userId.isBlank()) return
+        if (_currentUserId.value == userId) return   // user giữ nguyên → không restart
+
+        android.util.Log.d(TAG, "🔄 Switching user to: $userId")
+
+        _currentUserId.value = userId
+
+        // ❌ KHÔNG reset _transactions ở đây (không bao giờ làm!!)
+        // ❌ KHÔNG clear data
+
+        startObserving()
     }
 
-    // ✅ Observe transactions từ database (tự động update khi có thay đổi)
-    private fun observeTransactions() {
-        // Hủy job cũ nếu có
-        collectJob?.cancel()
 
-        collectJob = viewModelScope.launch {
+    // ============================================================
+    // 🔥 CHỈ OBSERVE TRANSACTION KHI USERID SẴN SÀNG
+    // 🔥 KHÔNG BAO GIỜ RESET LIST KHI JOB CANCEL
+    // ============================================================
+    private fun startObserving() {
+        observeJob?.cancel()
+
+        val userId = _currentUserId.value
+        android.util.Log.d(TAG, "📡 Observing transactions for user: $userId")
+
+        observeJob = viewModelScope.launch {
             _isLoading.value = true
-            try {
-                repository.getAllTransactions(currentUserId).collect { list ->
+
+            // ✅ DEBUG: Check actual database count
+            val dbCount = repository.getTransactionCount(userId)
+            android.util.Log.d(TAG, "🔍 Database has $dbCount transactions for $userId")
+
+            repository.getAllTransactions(userId)
+                .catch { e ->
+                    android.util.Log.e(TAG, "❌ Error observing transactions", e)
+                    _error.value = "Không thể tải giao dịch"
+                    _isLoading.value = false
+                }
+                .collect { list ->
+                    android.util.Log.d(TAG, "📦 Received: ${list.size} transactions (DB reported: $dbCount)")
                     _transactions.value = list
                     _isLoading.value = false
                 }
-            } catch (e: Exception) {
-                _error.value = "Không thể tải giao dịch: ${e.message}"
-                _isLoading.value = false
-            }
         }
     }
 
-    // ✅ Load transaction chi tiết
-    fun loadTransactionById(id: Int) {
-        viewModelScope.launch {
-            try {
-                _selectedTransaction.value = repository.getTransactionById(id)
-            } catch (e: Exception) {
-                _error.value = "Không thể tải chi tiết: ${e.message}"
-            }
-        }
-    }
 
-    // ✅ Thêm transaction
+    // ============================================================
+    // 🔥 THÊM TRANSACTION (KHÔNG BAO GIỜ MẤT)
+    // ============================================================
     suspend fun addTransaction(
         categoryId: Int,
         amount: Double,
@@ -77,36 +99,50 @@ class TransactionViewModel(
         date: Long,
         isIncome: Boolean
     ): Boolean {
-        android.util.Log.d("TransactionViewModel", "addTransaction called")
-        android.util.Log.d("TransactionViewModel", "currentUserId: $currentUserId")
 
-        if (currentUserId.isEmpty()) {
-            android.util.Log.e("TransactionViewModel", "UserId is empty!")
+        if (_currentUserId.value.isEmpty()) {
+            android.util.Log.e(TAG, "❌ Cannot add transaction: userId empty")
             return false
         }
 
+        val transaction = TransactionEntity(
+            userId = _currentUserId.value,
+            categoryId = categoryId,
+            amount = amount,
+            note = note,
+            date = date,
+            isIncome = isIncome
+        )
+
         return try {
-            val transaction = TransactionEntity(
-                userId = currentUserId,
-                categoryId = categoryId,
-                amount = amount,
-                note = note,
-                date = date,
-                isIncome = isIncome
-            )
-            android.util.Log.d("TransactionViewModel", "Inserting transaction: $transaction")
-            val rowId = repository.insertTransaction(transaction)
-            android.util.Log.d("TransactionViewModel", "Insert result rowId: $rowId")
-            // ✅ Room sẽ tự động trigger Flow update
+            android.util.Log.d(TAG, "📝 Inserting: $transaction")
+            repository.insertTransaction(transaction)
             true
         } catch (e: Exception) {
-            android.util.Log.e("TransactionViewModel", "Error inserting transaction", e)
-            _error.value = "Không thể thêm giao dịch: ${e.message}"
+            android.util.Log.e(TAG, "❌ Error inserting", e)
+            _error.value = "Không thể thêm giao dịch"
             false
         }
     }
 
-    // ✅ Cập nhật transaction
+
+    // ============================================================
+    // LOAD TRANSACTION DETAIL
+    // ============================================================
+    fun loadTransactionById(id: Int) {
+        viewModelScope.launch {
+            try {
+                _selectedTransaction.value = repository.getTransactionById(id)
+            } catch (e: Exception) {
+                _error.value = "Không thể tải chi tiết"
+            }
+        }
+    }
+
+
+    // ============================================================
+    // UPDATE
+    // ============================================================
     suspend fun updateTransaction(
         id: Int,
         categoryId: Int,
@@ -115,59 +151,51 @@ class TransactionViewModel(
         date: Long,
         isIncome: Boolean
     ): Boolean {
-        if (currentUserId.isEmpty()) return false
 
         return try {
             val transaction = TransactionEntity(
                 id = id,
-                userId = currentUserId,
+                userId = _currentUserId.value,
                 categoryId = categoryId,
                 amount = amount,
                 note = note,
                 date = date,
                 isIncome = isIncome
             )
+
             repository.updateTransaction(transaction)
-            // ✅ Reload chi tiết nếu đang xem
-            if (_selectedTransaction.value?.transaction?.id == id) {
+
+            if (_selectedTransaction.value?.transaction?.id == id)
                 loadTransactionById(id)
-            }
+
             true
         } catch (e: Exception) {
-            _error.value = "Không thể cập nhật: ${e.message}"
+            _error.value = "Không thể cập nhật"
             false
         }
     }
 
-    // ✅ Xóa transaction
+
+    // ============================================================
+    // DELETE
+    // ============================================================
     suspend fun deleteTransaction(transaction: TransactionEntity): Boolean {
         return try {
             repository.deleteTransaction(transaction)
-            // ✅ Flow sẽ tự động cập nhật danh sách
             true
         } catch (e: Exception) {
-            _error.value = "Không thể xóa: ${e.message}"
+            _error.value = "Không thể xóa"
             false
         }
     }
 
-    // ✅ Tính tổng thu/chi theo khoảng thời gian
-    suspend fun getTotalIncome(startDate: Long, endDate: Long): Double {
-        return if (currentUserId.isNotEmpty()) {
-            repository.getTotalIncome(currentUserId, startDate, endDate)
-        } else 0.0
-    }
 
-    suspend fun getTotalExpense(startDate: Long, endDate: Long): Double {
-        return if (currentUserId.isNotEmpty()) {
-            repository.getTotalExpense(currentUserId, startDate, endDate)
-        } else 0.0
-    }
-
-    // ✅ Helper function: Get start/end of day
-    fun getStartOfDay(timeInMillis: Long): Long {
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    fun getStartOfDay(time: Long): Long {
         val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInMillis
+        calendar.timeInMillis = time
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
         calendar.set(Calendar.SECOND, 0)
@@ -175,9 +203,9 @@ class TransactionViewModel(
         return calendar.timeInMillis
     }
 
-    fun getEndOfDay(timeInMillis: Long): Long {
+    fun getEndOfDay(time: Long): Long {
         val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInMillis
+        calendar.timeInMillis = time
         calendar.set(Calendar.HOUR_OF_DAY, 23)
         calendar.set(Calendar.MINUTE, 59)
         calendar.set(Calendar.SECOND, 59)
@@ -189,9 +217,19 @@ class TransactionViewModel(
         _error.value = null
     }
 
-    // ✅ Cleanup khi ViewModel bị destroy
     override fun onCleared() {
         super.onCleared()
-        collectJob?.cancel()
+        observeJob?.cancel()
+    }
+
+    suspend fun debugCheckTransactions(userId: String): Int {
+        return try {
+            val count = repository.getTransactionCount(userId)
+            android.util.Log.d(TAG, "🔍 Database check: User $userId has $count transactions")
+            count
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Error checking transaction count", e)
+            0
+        }
     }
 }

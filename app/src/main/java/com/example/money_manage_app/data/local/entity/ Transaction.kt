@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+
 @Entity(
     tableName = "transactions",
     foreignKeys = [
@@ -12,7 +13,7 @@ import androidx.room.PrimaryKey
             entity = User::class,
             parentColumns = ["userId"],
             childColumns = ["user_id"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.NO_ACTION  // ✅ FIXED: Không tự động xóa transactions
         ),
         ForeignKey(
             entity = CategoryEntity::class,
@@ -32,7 +33,7 @@ data class TransactionEntity(
     val id: Int = 0,
 
     @ColumnInfo(name = "user_id")
-    val userId: String,   // ❗ đảm bảo load từ UserViewModel
+    val userId: String,
 
     @ColumnInfo(name = "category_id")
     val categoryId: Int,

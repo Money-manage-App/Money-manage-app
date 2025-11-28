@@ -35,6 +35,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.money_manage_app.R
 import com.example.money_manage_app.data.local.entity.User
 import com.example.money_manage_app.features.viewmodel.CategoryViewModel
+import com.example.money_manage_app.features.viewmodel.TransactionViewModel
 import com.example.money_manage_app.features.viewmodel.UserViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -49,7 +50,8 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     navController: NavHostController,
     userViewModel: UserViewModel,
-    categoryViewModel: CategoryViewModel
+    categoryViewModel: CategoryViewModel,
+    transactionViewModel: TransactionViewModel // ✅ THÊM parameter
 ) {
     val context = LocalContext.current
     val systemUiController = rememberSystemUiController()
@@ -64,14 +66,15 @@ fun ProfileScreen(
     }
 
     val auth = FirebaseAuth.getInstance()
-    // ✅ Kiểm tra xem đã đăng nhập Google chưa
     val firebaseUser = auth.currentUser
     val isGoogleLoggedIn = firebaseUser != null
     val currentUserId = firebaseUser?.uid ?: "guest"
 
-    /** ✅ Load categories cho user */
+    /** ✅ Load categories VÀ transactions cho user */
     LaunchedEffect(currentUserId) {
+        Log.d("ProfileScreen", "✅ Setting userId for both ViewModels: $currentUserId")
         categoryViewModel.setUserId(currentUserId)
+        transactionViewModel.setUserId(currentUserId) // ✅ CRITICAL FIX
     }
 
     /** USER STATE (ROOM) */
@@ -90,6 +93,7 @@ fun ProfileScreen(
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
     val activity = context as Activity
 
+
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -103,6 +107,10 @@ fun ProfileScreen(
                     firebaseUser?.let { fu ->
                         scope.launch {
                             val existing = userViewModel.getUserOnce(fu.uid)
+
+                            // ✅ FIX 1: Check if this is a RETURNING user or NEW user
+                            val isReturningUser = existing != null
+
                             val newUser = existing?.copy(
                                 email = fu.email ?: existing.email,
                                 photo = existing.photo ?: fu.photoUrl?.toString()
@@ -118,10 +126,21 @@ fun ProfileScreen(
                             )
                             userViewModel.saveUser(newUser)
                             userState.value = newUser
-                            // ✅ Update UserViewModel
+
+                            // Update UserViewModel
                             userViewModel.login(context, fu.uid)
-                            // Reload categories cho user Google
+
+                            // ✅ FIX 2: CRITICAL - Load data immediately
+                            Log.d("ProfileScreen", "✅ Google login success (${if (isReturningUser) "RETURNING" else "NEW"} user): ${fu.uid}")
                             categoryViewModel.setUserId(fu.uid)
+                            transactionViewModel.setUserId(fu.uid)
+
+                            // ✅ FIX 3: Force reload to ensure data is fresh
+                            kotlinx.coroutines.delay(100) // Small delay to ensure Flow is connected
+
+                            if (!isReturningUser) {
+                                Log.d("ProfileScreen", "⚠️ NEW USER - No transactions expected")
+                            }
                         }
                     }
                 } else {
@@ -132,6 +151,7 @@ fun ProfileScreen(
             Log.e("ProfileScreen", "Google sign in failed", e)
         }
     }
+
 
     /** UI */
     Column(
@@ -178,7 +198,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // ✅ Hiển thị tên + email (nếu có user)
                 Crossfade(targetState = user != null && isGoogleLoggedIn) { loggedIn ->
                     if (loggedIn && user != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -194,7 +213,6 @@ fun ProfileScreen(
                             )
                         }
                     } else {
-                        // ✅ Chưa đăng nhập - chỉ hiện tên Guest
                         Text(
                             text = "Guest User",
                             color = textColor,
@@ -207,8 +225,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        /** OPTION ITEMS */
-        // ✅ CHỈ hiện nút Login nếu chưa đăng nhập Google
+        /** ✅ Login Button - CHỈ hiện nếu chưa đăng nhập */
         if (!isGoogleLoggedIn) {
             Card(
                 modifier = Modifier
@@ -243,18 +260,30 @@ fun ProfileScreen(
             }
         }
 
-        // ✅ CHỈ hiện nút Logout nếu ĐÃ đăng nhập Google
+        /** ✅ Logout Button - CHỈ hiện nếu ĐÃ đăng nhập */
         if (isGoogleLoggedIn) {
             ProfileCardItem(
                 icon = Icons.Default.Logout,
                 title = stringResource(R.string.logout),
                 onClick = {
-                    auth.signOut()
-                    googleSignInClient.signOut().addOnCompleteListener {
-                        userState.value = null
-                        // ✅ Chuyển về guest
-                        userViewModel.logout(context)
-                        categoryViewModel.setUserId("guest")
+                    scope.launch {
+                        Log.d("ProfileScreen", "🔴 Logging out...")
+
+                        // ✅ Sign out Firebase
+                        auth.signOut()
+                        googleSignInClient.signOut().addOnCompleteListener {
+                            scope.launch {
+                                userState.value = null
+
+                                // ✅ Logout user in ViewModel
+                                userViewModel.logout(context)
+
+                                // ✅ CRITICAL: Clear both categories AND transactions
+                                Log.d("ProfileScreen", "✅ Switching to guest user")
+                                transactionViewModel.setUserId("guest")
+                                categoryViewModel.setUserId("guest")
+                            }
+                        }
                     }
                 },
                 brandYellow = brandYellow,
