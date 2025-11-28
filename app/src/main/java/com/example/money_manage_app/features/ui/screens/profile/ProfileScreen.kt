@@ -64,9 +64,12 @@ fun ProfileScreen(
     }
 
     val auth = FirebaseAuth.getInstance()
-    val currentUserId = auth.currentUser?.uid ?: "guest"
+    // ✅ Kiểm tra xem đã đăng nhập Google chưa
+    val firebaseUser = auth.currentUser
+    val isGoogleLoggedIn = firebaseUser != null
+    val currentUserId = firebaseUser?.uid ?: "guest"
 
-    /** ⭕ Load categories cho user */
+    /** ✅ Load categories cho user */
     LaunchedEffect(currentUserId) {
         categoryViewModel.setUserId(currentUserId)
     }
@@ -115,6 +118,8 @@ fun ProfileScreen(
                             )
                             userViewModel.saveUser(newUser)
                             userState.value = newUser
+                            // ✅ Update UserViewModel
+                            userViewModel.login(context, fu.uid)
                             // Reload categories cho user Google
                             categoryViewModel.setUserId(fu.uid)
                         }
@@ -135,7 +140,6 @@ fun ProfileScreen(
             .background(colorScheme.background)
     ) {
 
-        /** HEADER */
         /** HEADER */
         Box(
             modifier = Modifier
@@ -174,8 +178,8 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Tên + Email / Login Button
-                Crossfade(targetState = user != null) { loggedIn ->
+                // ✅ Hiển thị tên + email (nếu có user)
+                Crossfade(targetState = user != null && isGoogleLoggedIn) { loggedIn ->
                     if (loggedIn && user != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
@@ -190,33 +194,57 @@ fun ProfileScreen(
                             )
                         }
                     } else {
-                        Button(
-                            onClick = { launcher.launch(googleSignInClient.signInIntent) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                            shape = RoundedCornerShape(50),
-                            border = BorderStroke(1.dp, Color.LightGray)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_google_logo),
-                                contentDescription = "",
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                stringResource(R.string.login_email),
-                                color = Color.Black
-                            )
-                        }
+                        // ✅ Chưa đăng nhập - chỉ hiện tên Guest
+                        Text(
+                            text = "Guest User",
+                            color = textColor,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
                     }
                 }
             }
         }
 
-
         Spacer(modifier = Modifier.height(20.dp))
 
         /** OPTION ITEMS */
-        if (userState.value != null) {
+        // ✅ CHỈ hiện nút Login nếu chưa đăng nhập Google
+        if (!isGoogleLoggedIn) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clickable { launcher.launch(googleSignInClient.signInIntent) },
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_google_logo),
+                        contentDescription = "",
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.login_email),
+                        color = colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // ✅ CHỈ hiện nút Logout nếu ĐÃ đăng nhập Google
+        if (isGoogleLoggedIn) {
             ProfileCardItem(
                 icon = Icons.Default.Logout,
                 title = stringResource(R.string.logout),
@@ -224,6 +252,9 @@ fun ProfileScreen(
                     auth.signOut()
                     googleSignInClient.signOut().addOnCompleteListener {
                         userState.value = null
+                        // ✅ Chuyển về guest
+                        userViewModel.logout(context)
+                        categoryViewModel.setUserId("guest")
                     }
                 },
                 brandYellow = brandYellow,

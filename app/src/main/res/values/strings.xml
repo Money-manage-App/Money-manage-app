@@ -81,4 +81,5 @@
 
     <string name="login_email">Đăng nhập bằng Google</string>
 
+    <string name="guest_user">Khách</string>
 </resources>
